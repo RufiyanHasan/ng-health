@@ -13,6 +13,16 @@ export type { Logger } from './core/logger.js';
 export type { AuditOptions } from './core/options.js';
 export type { AuditReport, ReportCheck } from './core/report.js';
 export { REPORT_SCHEMA_VERSION } from './core/report.js';
+export { ReportSchema, reportJsonSchema } from './core/report-schema.js';
+export { computeTrend, loadBaseline, type Trend } from './core/baseline.js';
+export type { TopFix } from './core/top-fixes.js';
+export {
+  renderConsole,
+  renderHtml,
+  renderJson,
+  renderMarkdown,
+  writeReports,
+} from './reporters/index.js';
 export type { CategoryScore, Grade, ScoreSummary } from './core/scoring.js';
 export type { ThresholdResult } from './core/thresholds.js';
 export {

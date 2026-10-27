@@ -105,6 +105,7 @@ describe.skipIf(!chrome)('runtime checks against real Chrome', { timeout: 180_00
           url: baseUrl,
           routes: ['/dashboard'],
           loginScript: path.join(dir, 'login.mjs'),
+          out: path.join(dir, 'out'),
         },
         silentLogger,
       );
@@ -127,7 +128,12 @@ describe.skipIf(!chrome)('runtime checks against real Chrome', { timeout: 180_00
       });
       const { report } = await audit(
         dir,
-        { ...runtimeOnly, url: baseUrl, loginScript: path.join(dir, 'login.mjs') },
+        {
+          ...runtimeOnly,
+          url: baseUrl,
+          loginScript: path.join(dir, 'login.mjs'),
+          out: path.join(dir, 'out'),
+        },
         silentLogger,
       );
       for (const id of ['performance/lighthouse', 'accessibility/axe']) {

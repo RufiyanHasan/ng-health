@@ -18,6 +18,7 @@ export interface AuditCliFlags {
   url?: string;
   routes?: string[];
   loginScript?: string;
+  baseline?: string;
 }
 
 /** Fully-resolved audit options: CLI flags merged over config. */
@@ -34,6 +35,8 @@ export interface AuditOptions {
   offline: boolean;
   /** Runtime settings with CLI overrides applied and loginScript made absolute. */
   runtime: RuntimeConfig;
+  /** Absolute path of a previous JSON report to compare against. */
+  baseline: string | undefined;
 }
 
 /** Splits repeated and comma-separated values: ["html,json", "md"] → ["html","json","md"]. */
@@ -81,6 +84,7 @@ export function resolveAuditOptions(
     build: flags.build !== false,
     offline: Boolean(flags.offline) || config.offline,
     runtime: resolveRuntime(flags, config, configFile, cwd),
+    baseline: flags.baseline ? path.resolve(cwd, flags.baseline) : undefined,
   };
 }
 

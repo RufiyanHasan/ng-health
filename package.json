@@ -24,6 +24,7 @@
   "type": "module",
   "dependencies": {
     "@angular/compiler": "^22.2.3",
+    "cli-table3": "^0.6.5",
     "commander": "^15.0.0",
     "fast-glob": "^3.3.3",
     "ora": "^9.4.1",
@@ -37,6 +38,8 @@
     "@types/node": "^26.6.5",
     "@types/semver": "^7.8.0",
     "@vitest/coverage-v8": "^5.0.5",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",

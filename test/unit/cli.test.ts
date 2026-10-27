@@ -46,7 +46,7 @@ describe('fe-health CLI', () => {
 
   it('audit succeeds on an Angular project', async () => {
     const dir = await makeTempProject(angularApp());
-    const r = await run('audit', dir, '--ci', '--offline');
+    const r = await run('audit', dir, '--ci', '--offline', '--out', `${dir}/out`);
     expect(r.code).toBe(0);
     expect(r.stderr).toContain('Angular ^19.2.0');
     expect(r.stderr).toContain('single app');
@@ -81,7 +81,7 @@ describe('fe-health CLI', () => {
 
   it('--verbose prints debug output', async () => {
     const dir = await makeTempProject(angularApp());
-    const r = await run('audit', dir, '--verbose', '--offline');
+    const r = await run('audit', dir, '--verbose', '--offline', '--out', `${dir}/out`);
     expect(r.code).toBe(0);
     expect(r.stderr).toContain('[debug] No config file found');
   });

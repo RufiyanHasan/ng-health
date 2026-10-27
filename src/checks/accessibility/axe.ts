@@ -32,14 +32,30 @@ export interface A11yViolation {
 const selectorOf = (target: unknown[]): string =>
   target.map((t) => (Array.isArray(t) ? t.join(' >>> ') : String(t))).join(' | ');
 
-/** "Fix any of the following:\n  A\n  B" → "Fix any of the following: A; B" */
+/**
+ * Condenses axe's failure summary, which has one or more sections:
+ * "Fix all of the following:\n  X\n\nFix any of the following:\n  A\n  B\n  C"
+ * → "Fix all of the following: X. Fix any of the following: A; B; …"
+ * axe lists every acceptable remedy per section; the first two are enough to act on.
+ */
 export function summarizeFailure(summary: string | undefined): string {
-  const [head, ...rest] = (summary ?? '')
+  const sections: { head: string; items: string[] }[] = [];
+  for (const line of (summary ?? '')
     .split('\n')
     .map((l) => l.trim())
-    .filter(Boolean);
-  if (!head) return '';
-  return head.endsWith(':') ? `${head} ${rest.join('; ')}`.trim() : [head, ...rest].join('; ');
+    .filter(Boolean)) {
+    const current = sections.at(-1);
+    if (line.endsWith(':') || !current) sections.push({ head: line, items: [] });
+    else current.items.push(line);
+  }
+  return sections
+    .map(({ head, items }) => {
+      const shown = items.length > 2 ? [...items.slice(0, 2), '…'] : items;
+      return head.endsWith(':')
+        ? `${head} ${shown.join('; ')}`.trim()
+        : [head, ...shown].join('; ');
+    })
+    .join('. ');
 }
 
 /** Groups violations by rule across routes, most severe first. */
@@ -79,7 +95,7 @@ export function axeFindings(violations: A11yViolation[]): Finding[] {
       severity: IMPACT[v.impact] ?? 'medium',
       ruleId: `axe/${v.id}`,
       message: `${v.help} — ${plural(v.nodes, 'element')} on ${listSome(routes)}.`,
-      fixHint: `${how ? `${how}. ` : ''}Affected: ${listSome(selectors)}`,
+      fixHint: `${how ? `${how}${how.endsWith('…') ? '' : '.'} ` : ''}Affected: ${listSome(selectors)}`,
       docsUrl: v.helpUrl,
     };
   });

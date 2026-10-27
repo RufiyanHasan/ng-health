@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`markdown > renders a PR-comment summary 1`] = `
+"<!-- fe-health-report -->
+## Frontend health: **76/100 (C)** — ❌ failed
+
+acme-shop · Angular 19.2.4 · npm · single app · 2026-10-27
+
+| Category | Score |
+|---|---:|
+| Dependencies | 🟡 65 |
+| Angular code | 🟡 70 |
+| Bundle size | 🟢 100 |
+| Code hygiene | – |
+
+**Findings:** 1 critical · 0 high · 2 medium · 1 low
+
+| | Threshold | Actual | Expected |
+|---|---|---:|---:|
+| ✅ | Overall score | 76 | ≥ 70 |
+| ❌ | Critical vulnerabilities | 1 | ≤ 0 |
+
+### Top fixes
+
+1. 🔴 **lodash: Prototype pollution**  
+   Run "npm audit fix".
+2. 🟡 **OnPush change detection: 2 occurrences, e.g. AComponent uses default change detection.**  
+   Fix it
+3. ⚪ **XSS \\<script\\>alert(1)\\</script\\> \\| pipe \\\`tick\\\` \\*star\\***  
+   Do \\<b\\>not\\</b\\> do that
+
+<details><summary>Checks not completed (2)</summary>
+
+- **skipped** \`performance/lighthouse\` — Chromium not available.
+- **errored** \`hygiene/coverage\` — boom
+
+</details>
+
+<sub>Generated locally by fe-health v0.0.0-test. The full HTML report has every finding.</sub>
+"
+`;

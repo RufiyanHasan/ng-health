@@ -1,7 +1,8 @@
 import path from 'node:path';
 import pc from 'picocolors';
 import { builtinChecks } from '../checks/index.js';
-import { renderConsole } from '../reporters/console.js';
+import { writeReports } from '../reporters/index.js';
+import { computeTrend, loadBaseline } from './baseline.js';
 import { loadConfig } from './config/loader.js';
 import { DEFAULT_SEVERITY_PENALTIES } from './config/schema.js';
 import { createBaseContext } from './context.js';
@@ -17,6 +18,7 @@ import { buildReport, type AuditReport } from './report.js';
 import { runChecks, type BaseContext } from './runner.js';
 import { computeScores } from './scoring.js';
 import { evaluateThresholds } from './thresholds.js';
+import { topFixes } from './top-fixes.js';
 import type { Check, CheckResult } from './types.js';
 
 export interface AuditOutcome {
@@ -48,6 +50,8 @@ export async function audit(
   const options = resolveAuditOptions(projectPath, flags, config, file);
   logger.debug(file ? `Using config ${file}` : 'No config file found, using defaults');
   logger.debug(`Options: ${JSON.stringify(options)}`);
+  // Fail fast on a bad baseline, before spending minutes on checks.
+  const baseline = options.baseline ? await loadBaseline(options.baseline) : undefined;
 
   const progress = createProgress(!options.ci && !options.verbose);
   progress.start('Detecting project setup…');
@@ -70,6 +74,7 @@ export async function audit(
   }
 
   const total = selection.selected.length;
+  const penalties = { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties };
   progress.start(`Running ${total} checks…`);
   const context = createBaseContext(project, config, logger, {
     build: options.build,
@@ -80,7 +85,7 @@ export async function audit(
   let ran: CheckResult[];
   try {
     ran = await runChecks(selection.selected, context, {
-      severityPenalties: { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties },
+      severityPenalties: penalties,
       onStart: (check) => logger.debug(`Starting ${check.id}`),
       onDone: (r, done) => {
         progress.update(`Running checks (${done}/${total}) — finished ${r.id}`);
@@ -115,9 +120,20 @@ export async function audit(
   const scores = computeScores(results, config);
   const findings = results.flatMap((r) => r.findings);
   const thresholds = evaluateThresholds(config.thresholds, scores, findings, results);
-  const report = buildReport({ project, results, scores, thresholds, startedAt });
+  const fixes = topFixes(
+    findings,
+    new Map(allChecks.map((c) => [c.id, c.name])),
+    config,
+    penalties,
+  );
+  const report = buildReport({ project, results, scores, thresholds, topFixes: fixes, startedAt });
+  if (baseline) report.trend = computeTrend(baseline, report);
 
-  if (options.formats.includes('console')) logger.out(renderConsole(report));
+  const written = await writeReports(report, options.formats, options.outDir, logger);
+  for (const file of written) {
+    const rel = path.relative(process.cwd(), file);
+    logger.info(`Report written: ${rel.startsWith('..') ? file : rel}`);
+  }
 
   return {
     exitCode: report.passed ? ExitCode.Pass : ExitCode.ThresholdFailed,

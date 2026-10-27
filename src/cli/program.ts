@@ -47,6 +47,10 @@ export function buildProgram(
     .option('--url <url>', 'audit a running app (runtime checks) instead of serving the build')
     .option('--routes <routes>', 'routes for runtime checks, comma-separated (default: /)', collect)
     .option('--login-script <file>', 'module that logs in before runtime checks (see docs)')
+    .option(
+      '--baseline <file>',
+      'previous JSON report: show score deltas and new/resolved findings',
+    )
     .option('--no-build', 'reuse the existing build output instead of running a production build')
     .option('--offline', 'never touch the network (skips registry lookups)')
     .option('--verbose', 'verbose diagnostic output')

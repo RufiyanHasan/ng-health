@@ -1,7 +1,9 @@
 import { SEVERITIES, type Severity } from './config/schema.js';
 import type { ProjectInfo } from './detect/index.js';
 import type { CategoryScore, Grade, ScoreSummary } from './scoring.js';
+import type { Trend } from './baseline.js';
 import type { ThresholdResult } from './thresholds.js';
+import type { TopFix } from './top-fixes.js';
 import type { CheckResult, CheckStatus, ReportedFinding } from './types.js';
 import { TOOL_NAME, VERSION } from '../version.js';
 
@@ -36,8 +38,12 @@ export interface AuditReport {
     findings: Record<Severity, number> & { total: number };
     checks: Record<CheckStatus, number>;
   };
+  /** The highest-impact fixes, ranked. */
+  topFixes: TopFix[];
   thresholds: ThresholdResult[];
   passed: boolean;
+  /** Present when a --baseline report was given. */
+  trend?: Trend;
 }
 
 export function buildReport(input: {
@@ -45,6 +51,7 @@ export function buildReport(input: {
   results: CheckResult[];
   scores: ScoreSummary;
   thresholds: ThresholdResult[];
+  topFixes: TopFix[];
   startedAt: Date;
 }): AuditReport {
   const { project, results, scores, thresholds } = input;
@@ -83,6 +90,7 @@ export function buildReport(input: {
         skipped: byStatus('skipped'),
       },
     },
+    topFixes: input.topFixes,
     thresholds,
     passed: thresholds.every((t) => t.passed),
   };

@@ -18,7 +18,7 @@ const checks = [
 describe('audit', () => {
   it('runs checks, scores, and fails thresholds with exit code 1', async () => {
     const dir = await makeTempProject(angularApp());
-    const out = await audit(dir, { format: ['json'] }, silentLogger, { checks });
+    const out = await audit(dir, { format: ['json'], out: `${dir}/out` }, silentLogger, { checks });
     const { report } = out;
     expect(report.checks.map((c) => [c.id, c.status, c.score])).toEqual([
       ['angular/good', 'completed', 100],
@@ -35,7 +35,9 @@ describe('audit', () => {
     expect(report.thresholds.map((t) => [t.id, t.passed])).toEqual([['minOverallScore', true]]);
     expect(out.exitCode).toBe(0);
 
-    const strict = await audit(dir, { skip: ['angular/good'] }, silentLogger, { checks });
+    const strict = await audit(dir, { skip: ['angular/good'], out: `${dir}/out` }, silentLogger, {
+      checks,
+    });
     expect(strict.report.checks[0]).toMatchObject({
       status: 'skipped',
       reason: 'excluded by --skip',
@@ -62,7 +64,9 @@ describe('audit', () => {
         'node_modules/ignored/src/x.ts': '',
       }),
     );
-    const { report, exitCode } = await audit(dir, {}, silentLogger, { checks: [] });
+    const { report, exitCode } = await audit(dir, { out: `${dir}/out` }, silentLogger, {
+      checks: [],
+    });
     expect(report.findings.map((f) => [f.checkId, f.file])).toEqual([
       ['custom/todo', 'src/app.ts'],
     ]);
