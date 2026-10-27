@@ -1,5 +1,5 @@
 import { readFile, stat } from 'node:fs/promises';
-import { FeHealthError, errorMessage } from './errors.js';
+import { NgHealthError, errorMessage } from './errors.js';
 
 export async function pathExists(p: string): Promise<boolean> {
   try {
@@ -59,18 +59,18 @@ export function parseJsonc<T = unknown>(text: string): T {
   return JSON.parse(stripJsonc(text.replace(/^\uFEFF/, ''))) as T;
 }
 
-/** Reads a JSON/JSONC file; returns undefined if it does not exist, throws FeHealthError if invalid. */
+/** Reads a JSON/JSONC file; returns undefined if it does not exist, throws NgHealthError if invalid. */
 export async function readJsonFile<T = unknown>(file: string): Promise<T | undefined> {
   let text: string;
   try {
     text = await readFile(file, 'utf8');
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-    throw new FeHealthError(`Could not read ${file}: ${errorMessage(err)}`, { cause: err });
+    throw new NgHealthError(`Could not read ${file}: ${errorMessage(err)}`, { cause: err });
   }
   try {
     return parseJsonc<T>(text);
   } catch (err) {
-    throw new FeHealthError(`${file} is not valid JSON: ${errorMessage(err)}`, { cause: err });
+    throw new NgHealthError(`${file} is not valid JSON: ${errorMessage(err)}`, { cause: err });
   }
 }

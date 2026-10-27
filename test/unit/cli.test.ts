@@ -27,7 +27,7 @@ async function run(...args: string[]) {
   return { code, stdout: stdout.text, stderr: stderr.text };
 }
 
-describe('fe-health CLI', () => {
+describe('ng-health CLI', () => {
   it('--version prints the package version and exits 0', async () => {
     const r = await run('--version');
     expect(r.code).toBe(0);
@@ -63,17 +63,17 @@ describe('fe-health CLI', () => {
     const r = await run('audit', dir);
     expect(r.code).toBe(2);
     expect(r.stderr).toContain('No Angular project found');
-    expect(r.stderr).toContain('fe-health audit <path>');
+    expect(r.stderr).toContain('ng-health audit <path>');
   });
 
   it('audit exits 2 for an invalid config or format', async () => {
     const dir = await makeTempProject(
-      angularApp({ 'fe-health.config.json': { thresholds: { minOverallScore: -1 } } }),
+      angularApp({ 'ng-health.config.json': { thresholds: { minOverallScore: -1 } } }),
     );
     const bad = await run('audit', dir);
     expect(bad.code).toBe(2);
     expect(bad.stderr).toContain('thresholds.minOverallScore');
-    await writeFile(`${dir}/fe-health.config.json`, '{}');
+    await writeFile(`${dir}/ng-health.config.json`, '{}');
     const fmt = await run('audit', dir, '--format', 'html,pdf');
     expect(fmt.code).toBe(2);
     expect(fmt.stderr).toContain('Unknown report format: pdf');
@@ -89,7 +89,7 @@ describe('fe-health CLI', () => {
   it('init writes a valid config and refuses to overwrite without --force', async () => {
     const dir = await makeTempProject({});
     expect((await run('init', dir)).code).toBe(0);
-    const written = JSON.parse(await readFile(`${dir}/fe-health.config.json`, 'utf8'));
+    const written = JSON.parse(await readFile(`${dir}/ng-health.config.json`, 'utf8'));
     expect(written.thresholds.minOverallScore).toBe(70);
 
     const again = await run('init', dir);
@@ -97,7 +97,7 @@ describe('fe-health CLI', () => {
     expect(again.stderr).toContain('already exists');
     expect((await run('init', dir, '--force')).code).toBe(0);
 
-    expect((await run('audit', dir, '--config', `${dir}/fe-health.config.json`)).stderr).toContain(
+    expect((await run('audit', dir, '--config', `${dir}/ng-health.config.json`)).stderr).toContain(
       'No Angular project found',
     );
   });

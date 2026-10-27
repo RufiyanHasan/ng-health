@@ -117,7 +117,7 @@ export const ReportSchema = z.object({
     .optional(),
 });
 
-// Compile-time guard: every AuditReport fe-health produces must satisfy the published schema.
+// Compile-time guard: every AuditReport ng-health produces must satisfy the published schema.
 const _inSync = (report: AuditReport): z.input<typeof ReportSchema> => report;
 void _inSync;
 

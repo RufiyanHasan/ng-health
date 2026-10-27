@@ -1,5 +1,5 @@
 // checks/todo-comments.mjs
-import { defineCheck } from 'fe-health';
+import { defineCheck } from 'ng-health';
 
 export default defineCheck({
   id: 'custom/todo-comments', // unique, lowercase, "category/name"

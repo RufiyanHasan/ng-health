@@ -120,7 +120,7 @@ export default defineCheck({
     const assets = (await pathExists(browserDir)) ? await listAssets(browserDir) : [];
     if (!assets.some((a) => /\.m?js$/.test(a.name))) {
       skipCheck(
-        `No build output in ${outputPath}. Install dependencies so fe-health can run "ng build", or build first and pass --no-build.`,
+        `No build output in ${outputPath}. Install dependencies so ng-health can run "ng build", or build first and pass --no-build.`,
       );
     }
 

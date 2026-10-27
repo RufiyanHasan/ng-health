@@ -58,7 +58,7 @@ describe('loadBaseline', () => {
       /Unsupported baseline schema version "2.0"/,
     );
     await expect(loadBaseline(path.join(dir, 'other.json'))).rejects.toThrow(
-      /is not a fe-health JSON report/,
+      /is not a ng-health JSON report/,
     );
     expect((await loadBaseline(path.join(dir, 'ok.json'))).project.name).toBe('acme-shop');
   });

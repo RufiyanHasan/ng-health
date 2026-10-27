@@ -8,7 +8,7 @@ for (const [signal, code] of [
   ['SIGTERM', 143],
 ] as const) {
   process.once(signal, () => {
-    process.stderr.write(`\nfe-health: received ${signal}, cleaning up…\n`);
+    process.stderr.write(`\nng-health: received ${signal}, cleaning up…\n`);
     void runShutdownCleanups().finally(() => process.exit(code));
   });
 }

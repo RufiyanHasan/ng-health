@@ -1,4 +1,4 @@
-// Public API for embedding fe-health and for writing check plugins.
+// Public API for embedding ng-health and for writing check plugins.
 export { audit, type AuditOutcome } from './core/audit.js';
 export { loadConfig, parseConfig } from './core/config/loader.js';
 export * from './core/config/schema.js';
@@ -8,7 +8,7 @@ export {
   type AngularProjectInfo,
   type PackageManager,
 } from './core/detect/index.js';
-export { ExitCode, FeHealthError } from './core/errors.js';
+export { ExitCode, NgHealthError } from './core/errors.js';
 export { createLogger, silentLogger, type Logger } from './core/logger.js';
 export type { AuditCliFlags, AuditOptions } from './core/options.js';
 export type { AuditReport, ReportCheck } from './core/report.js';

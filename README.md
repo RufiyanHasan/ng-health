@@ -1,4 +1,4 @@
-# fe-health
+# ng-health
 
 Audit an Angular codebase and get a **scored, actionable health report**: dependencies, bundle
 size, Angular anti-patterns, code hygiene, Lighthouse performance and WCAG accessibility.
@@ -7,7 +7,7 @@ size, Angular anti-patterns, code hygiene, Lighthouse performance and WCAG acces
 - **Presales** run it on a client codebase and hand over a print-ready HTML report.
 - **CI** runs it as a quality gate on every pull request.
 
-Everything runs locally. fe-health never uploads your code or reports and has no telemetry.
+Everything runs locally. ng-health never uploads your code or reports and has no telemetry.
 The only network traffic is to your npm registry (`npm outdated`/`audit`/`view`), and
 `--offline` turns that off too.
 
@@ -28,20 +28,20 @@ The only network traffic is to your npm registry (`npm outdated`/`audit`/`view`)
 
 ## Install
 
-Requires **Node.js 22 or later**.
+Requires **Node.js 24 or later** (current LTS).
 
 ```bash
 # one-off, no install
-npx fe-health audit
+npx ng-health audit
 
 # or as a dev dependency of the project
-npm install --save-dev fe-health
+npm install --save-dev ng-health
 ```
 
 For an internal registry, point npm at it first (for example in `.npmrc`:
 `registry=https://npm.example.internal/`).
 
-The runtime checks (Lighthouse and axe) need **Chrome or Chromium**. fe-health finds an
+The runtime checks (Lighthouse and axe) need **Chrome or Chromium**. ng-health finds an
 installed Google Chrome automatically. Otherwise run `npx playwright install chromium` or set
 `CHROME_PATH`. Without a browser those two checks are skipped, and the report says so.
 
@@ -49,23 +49,23 @@ installed Google Chrome automatically. Otherwise run `npx playwright install chr
 
 ```bash
 cd my-angular-app
-npx fe-health init      # optional: writes fe-health.config.json with the defaults
-npx fe-health audit     # audits the current directory
+npx ng-health init      # optional: writes ng-health.config.json with the defaults
+npx ng-health audit     # audits the current directory
 ```
 
-fe-health detects the Angular version, package manager (npm, pnpm, yarn, bun), workspace
+ng-health detects the Angular version, package manager (npm, pnpm, yarn, bun), workspace
 layout, SSR and Nx. It runs a production build (or reuses `dist/` with `--no-build`), runs
-every check, prints a summary and writes `fe-health-report/fe-health-report.html`.
+every check, prints a summary and writes `ng-health-report/ng-health-report.html`.
 
 ```bash
 # the HTML and JSON reports only, into ./reports
-npx fe-health audit --format html,json --out reports
+npx ng-health audit --format html,json --out reports
 
 # a quick static-only pass (no build, no browser, no registry)
-npx fe-health audit --no-build --skip performance,accessibility --offline
+npx ng-health audit --no-build --skip performance,accessibility --offline
 
 # audit a deployed environment, including pages behind a login
-npx fe-health audit --url https://staging.example.com --routes /,/orders --login-script ./login.mjs
+npx ng-health audit --url https://staging.example.com --routes /,/orders --login-script ./login.mjs
 ```
 
 ### Exit codes
@@ -84,20 +84,20 @@ report and is left out of the score.
 
 | Command                    | Description                                                         |
 | -------------------------- | ------------------------------------------------------------------- |
-| `fe-health audit [path]`   | Audit the Angular project at `path` (default `.`).                  |
-| `fe-health init [path]`    | Write `fe-health.config.json` with defaults (`--force` overwrites). |
-| `fe-health --version`      | Print the version.                                                  |
-| `fe-health help [command]` | Show help.                                                          |
+| `ng-health audit [path]`   | Audit the Angular project at `path` (default `.`).                  |
+| `ng-health init [path]`    | Write `ng-health.config.json` with defaults (`--force` overwrites). |
+| `ng-health --version`      | Print the version.                                                  |
+| `ng-health help [command]` | Show help.                                                          |
 
 `audit` flags:
 
 | Flag                     | Description                                                                                            |
 | ------------------------ | ------------------------------------------------------------------------------------------------------ |
 | `-f, --format <formats>` | `console`, `html`, `json`, `md`. Repeatable or comma-separated. Default: `console,html` (from config). |
-| `-o, --out <dir>`        | Output directory for report files. Default: `fe-health-report`.                                        |
+| `-o, --out <dir>`        | Output directory for report files. Default: `ng-health-report`.                                        |
 | `--only <checks>`        | Run only these check ids or categories, e.g. `--only angular,bundle/size`.                             |
 | `--skip <checks>`        | Skip these check ids or categories, e.g. `--skip performance,accessibility`.                           |
-| `-c, --config <file>`    | Config file. Default: `<path>/fe-health.config.json` (optional).                                       |
+| `-c, --config <file>`    | Config file. Default: `<path>/ng-health.config.json` (optional).                                       |
 | `--ci`                   | CI mode: no spinner, Markdown summary on stdout, always writes the `.md` report, GitHub annotations.   |
 | `--url <url>`            | Audit a running app with the runtime checks instead of serving the local build.                        |
 | `--routes <routes>`      | Routes for Lighthouse and axe, comma-separated. Default: `/`.                                          |
@@ -152,14 +152,14 @@ checks don't count towards the score.
 
 ## Configuration
 
-`fe-health.config.json` in the project root is optional. `fe-health init` writes one with the
+`ng-health.config.json` in the project root is optional. `ng-health init` writes one with the
 defaults. The file is validated on load, and errors name the exact field. Comments are allowed.
 Editors get autocomplete from the `$schema` reference
-(`node_modules/fe-health/schema/config.schema.json`).
+(`node_modules/ng-health/dist/schema/config.schema.json`).
 
 ```jsonc
 {
-  "$schema": "./node_modules/fe-health/schema/config.schema.json",
+  "$schema": "./node_modules/ng-health/dist/schema/config.schema.json",
   // Per check id or category: false disables, or { enabled, weight, timeoutMs, options }
   "checks": {
     "angular/large-components": { "options": { "maxLoc": 300 } },
@@ -191,7 +191,7 @@ Editors get autocomplete from the `$schema` reference
 | `thresholds`          | `minOverallScore: 70, maxCriticalVulnerabilities: 0` | Quality gate; any failure exits 1. Keys: `minOverallScore`, `minCategoryScores`, `maxInitialBundleKb`, `maxCriticalVulnerabilities`, `maxCriticalA11yViolations` (elements), `failOnSeverity`. |
 | `ignore`              | `node_modules`, `dist`, `.angular`, `coverage`       | Globs excluded from source analysis.                                                                                                                                                           |
 | `plugins`             | `[]`                                                 | Custom check modules: paths relative to the config file, or package names.                                                                                                                     |
-| `output.dir`          | `fe-health-report`                                   | Report directory (`--out` overrides).                                                                                                                                                          |
+| `output.dir`          | `ng-health-report`                                   | Report directory (`--out` overrides).                                                                                                                                                          |
 | `output.formats`      | `["console", "html"]`                                | Report formats (`--format` overrides).                                                                                                                                                         |
 | `runtime.url`         | serve the local build                                | Audit a running app (`--url` overrides).                                                                                                                                                       |
 | `runtime.routes`      | `["/"]`                                              | Routes for Lighthouse and axe (`--routes` overrides).                                                                                                                                          |
@@ -205,9 +205,9 @@ Editors get autocomplete from the `$schema` reference
 
 | Format    | File                    | For                                                                                                                                                                                                                                             |
 | --------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `html`    | `fe-health-report.html` | People. One self-contained file with no external assets: score gauge, category scores, quality gate, Top 10 fixes, a sortable and filterable findings table, bundle, Lighthouse and accessibility details. Print it to PDF for client handover. |
-| `json`    | `fe-health-report.json` | Machines. Versioned schema: [`schema/report.v1.json`](schema/report.v1.json). Within 1.x, fields are only added.                                                                                                                                |
-| `md`      | `fe-health-report.md`   | Pull request comments. Short summary with a hidden marker so CI can update its previous comment.                                                                                                                                                |
+| `html`    | `ng-health-report.html` | People. One self-contained file with no external assets: score gauge, category scores, quality gate, Top 10 fixes, a sortable and filterable findings table, bundle, Lighthouse and accessibility details. Print it to PDF for client handover. |
+| `json`    | `ng-health-report.json` | Machines. Versioned schema: [`schema/report.v1.json`](schema/report.v1.json). Within 1.x, fields are only added.                                                                                                                                |
+| `md`      | `ng-health-report.md`   | Pull request comments. Short summary with a hidden marker so CI can update its previous comment.                                                                                                                                                |
 | `console` | (stdout)                | Terminals. Colored summary table.                                                                                                                                                                                                               |
 
 **Trends.** Pass a previous JSON report with `--baseline old.json` to get score deltas and
@@ -219,27 +219,27 @@ Reports never contain absolute paths, so they're safe to share with a client.
 ## CI setup
 
 `--ci` turns off the spinner, prints the Markdown summary to stdout, writes
-`fe-health-report.md`, and exits 1 when a threshold fails. On GitHub Actions it also adds:
+`ng-health-report.md`, and exits 1 when a threshold fails. On GitHub Actions it also adds:
 
 - inline annotations on the PR diff: errors for critical/high findings, warnings for medium ones
 - the summary on the job's summary page
 
 A complete GitHub Actions workflow is in
-[`examples/github-actions/fe-health.yml`](examples/github-actions/fe-health.yml). It:
+[`examples/github-actions/ng-health.yml`](examples/github-actions/ng-health.yml). It:
 
 1. audits every pull request,
 2. compares it against the latest report from `main` (`--baseline`),
-3. uploads the HTML report as the `fe-health-report` artifact,
+3. uploads the HTML report as the `ng-health-report` artifact,
 4. posts or updates one summary comment on the PR,
 5. fails the job when the quality gate fails.
 
-Copy it to `.github/workflows/fe-health.yml` and set your thresholds in `fe-health.config.json`.
+Copy it to `.github/workflows/ng-health.yml` and set your thresholds in `ng-health.config.json`.
 
 On other CI systems:
 
 ```bash
-npx fe-health audit --ci --format html,json,md --out fe-health-report
-# publish fe-health-report/ as an artifact; post fe-health-report.md where reviewers see it
+npx ng-health audit --ci --format html,json,md --out ng-health-report
+# publish ng-health-report/ as an artifact; post ng-health-report.md where reviewers see it
 ```
 
 GitHub-hosted Ubuntu runners have Chrome preinstalled. Elsewhere, install it or run
@@ -250,7 +250,7 @@ GitHub-hosted Ubuntu runners have Chrome preinstalled. Elsewhere, install it or 
 A check is a plain object with an `id`, a `name`, a `category` and an async `run(ctx)` that
 returns findings. Put it in a module, list the module under `plugins` in the config, and it
 runs alongside the built-in checks. Its findings appear in every report, and its category
-gets its own score. You don't need to change fe-health itself.
+gets its own score. You don't need to change ng-health itself.
 
 **1. Create the module.** This example flags `TODO`/`FIXME` comments in the source:
 
@@ -258,7 +258,7 @@ gets its own score. You don't need to change fe-health itself.
 
 ```js
 // checks/todo-comments.mjs
-import { defineCheck } from 'fe-health';
+import { defineCheck } from 'ng-health';
 
 export default defineCheck({
   id: 'custom/todo-comments', // unique, lowercase, "category/name"
@@ -293,7 +293,7 @@ export default defineCheck({
 
 <!-- plugin-example:end -->
 
-**2. Register it** in `fe-health.config.json`. Paths are relative to the config file; package
+**2. Register it** in `ng-health.config.json`. Paths are relative to the config file; package
 names are resolved from the project's `node_modules`:
 
 ```json
@@ -304,7 +304,7 @@ names are resolved from the project's `node_modules`:
 }
 ```
 
-**3. Run it:** `npx fe-health audit --only custom` runs just your check while you develop it.
+**3. Run it:** `npx ng-health audit --only custom` runs just your check while you develop it.
 
 ### The check contract
 
@@ -322,7 +322,7 @@ names are resolved from the project's `node_modules`:
 A **finding** has `severity` (`critical` | `high` | `medium` | `low`), `message`, `fixHint`
 (required: every finding must say what to do), and optionally `file` (relative to the project
 root), `line`, `column`, `docsUrl` and `ruleId`. Findings with the same `ruleId` and `fixHint`
-are grouped into a single Top-10 fix. fe-health validates what you return; an invalid result
+are grouped into a single Top-10 fix. ng-health validates what you return; an invalid result
 makes the check errored rather than crashing the audit.
 
 The **context** (`ctx`) gives you:
@@ -341,15 +341,15 @@ The **context** (`ctx`) gives you:
 | `ctx.onCleanup(fn)`        | Teardown that runs after all checks, even when interrupted.                          |
 
 Plugins can be plain `.mjs` like the one above, or TypeScript compiled to ESM. The types
-(`Check`, `CheckContext`, `Finding`) are exported from `fe-health`. A module may export one
+(`Check`, `CheckContext`, `Finding`) are exported from `ng-health`. A module may export one
 check, an array of checks (`export default [a, b]`), or `export const checks = [...]`.
 
-To contribute a check to fe-health itself instead, see [CONTRIBUTING.md](CONTRIBUTING.md).
+To contribute a check to ng-health itself instead, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Programmatic use
 
 ```js
-import { audit, createLogger } from 'fe-health';
+import { audit, createLogger } from 'ng-health';
 
 // Silent by default; pass createLogger() to see progress and the console summary.
 const { report, exitCode } = await audit('path/to/app', {
@@ -366,8 +366,8 @@ console.log(report.score.overall, report.topFixes[0]?.message, exitCode);
 
 ## Troubleshooting
 
-- **"No Angular project found"**: run fe-health from the folder that holds `angular.json`, or pass it: `fe-health audit apps/web`.
-- **Bundle check skipped ("No build output")**: install dependencies so fe-health can run `ng build`, or build first and pass `--no-build`.
+- **"No Angular project found"**: run ng-health from the folder that holds `angular.json`, or pass it: `ng-health audit apps/web`.
+- **Bundle check skipped ("No build output")**: install dependencies so ng-health can run `ng build`, or build first and pass `--no-build`.
 - **Runtime checks skipped ("Chromium not available")**: install Chrome, run `npx playwright install chromium`, or set `CHROME_PATH`.
 - **Outdated/vulnerability checks skipped**: you are offline (`--offline` or `offline: true`), or there is no lockfile.
 - **A check errored**: re-run with `--verbose` to see its stack trace. The rest of the report is still valid.

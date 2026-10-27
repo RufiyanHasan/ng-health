@@ -7,7 +7,7 @@ import { resolveBuildOutput } from '../checks/bundle/output.js';
 import { CHROME_HELP, chromeFlags, findChrome } from './chrome.js';
 import { serveStatic } from './server.js';
 
-/** The subset of a Lighthouse result (LHR) that fe-health reads. */
+/** The subset of a Lighthouse result (LHR) that ng-health reads. */
 export interface LighthouseResult {
   categories: Record<
     string,
@@ -30,7 +30,7 @@ export interface LighthouseResult {
   runtimeError?: { code: string; message: string };
 }
 
-/** The subset of axe-core results that fe-health reads. */
+/** The subset of axe-core results that ng-health reads. */
 export interface AxeResult {
   violations: {
     id: string;

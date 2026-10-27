@@ -1,6 +1,6 @@
 /**
  * Angular major release dates (x.0.0 on npm). Used offline; when online the dates are read
- * from the registry so new majors are picked up without a fe-health release.
+ * from the registry so new majors are picked up without a ng-health release.
  */
 export const ANGULAR_RELEASES: Record<number, string> = {
   12: '2021-05-12',

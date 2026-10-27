@@ -4,7 +4,7 @@ import type { ReportedFinding } from '../core/types.js';
 import { band, categoryLabel, formatDelta, location, projectLine } from './format.js';
 
 /** Hidden marker so CI can find and update its previous PR comment. */
-export const MARKDOWN_MARKER = '<!-- fe-health-report -->';
+export const MARKDOWN_MARKER = '<!-- ng-health-report -->';
 
 const BAND_EMOJI = { good: '🟢', ok: '🟡', poor: '🔴', none: '⚪' } as const;
 const SEVERITY_EMOJI: Record<Severity, string> = {

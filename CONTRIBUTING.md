@@ -1,4 +1,4 @@
-# Contributing to fe-health
+# Contributing to ng-health
 
 Thanks for helping. This guide covers the local setup, the project layout, and how to add a
 built-in check.
@@ -6,12 +6,12 @@ built-in check.
 ## Setup
 
 ```bash
-git clone <repo> && cd fe-health
+git clone <repo> && cd ng-health
 npm ci
 npm run lint && npm test && npm run build   # all must pass before you open a PR
 ```
 
-Node 22+ is required. Google Chrome (or `npx playwright install chromium`) is needed for the
+Node 24+ (current LTS) is required. Google Chrome (or `npx playwright install chromium`) is needed for the
 browser tests; without it they are skipped automatically.
 
 | Script              | What it does                                                                    |

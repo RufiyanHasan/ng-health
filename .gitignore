@@ -1,7 +1,7 @@
 node_modules/
 dist/
 coverage/
-fe-health-report/
+ng-health-report/
 *.log
 .DS_Store
 !test/fixtures/**/dist/

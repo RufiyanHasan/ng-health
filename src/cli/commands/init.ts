@@ -6,12 +6,12 @@ import {
   DEFAULT_CATEGORY_WEIGHTS,
   type ConfigInput,
 } from '../../core/config/schema.js';
-import { FeHealthError } from '../../core/errors.js';
+import { NgHealthError } from '../../core/errors.js';
 import { isDirectory, pathExists } from '../../core/fs.js';
 import type { Logger } from '../../core/logger.js';
 
 export const DEFAULT_CONFIG: ConfigInput = {
-  $schema: './node_modules/fe-health/schema/config.schema.json',
+  $schema: './node_modules/ng-health/dist/schema/config.schema.json',
   checks: {},
   skip: [],
   weights: { ...DEFAULT_CATEGORY_WEIGHTS },
@@ -22,7 +22,7 @@ export const DEFAULT_CONFIG: ConfigInput = {
   },
   ignore: ['**/node_modules/**', '**/dist/**', '**/.angular/**', '**/coverage/**'],
   runtime: { routes: ['/'], formFactor: 'mobile' },
-  output: { dir: 'fe-health-report', formats: ['console', 'html'] },
+  output: { dir: 'ng-health-report', formats: ['console', 'html'] },
 };
 
 export async function initCommand(
@@ -32,11 +32,11 @@ export async function initCommand(
 ): Promise<string> {
   const root = path.resolve(dir);
   if (!(await isDirectory(root))) {
-    throw new FeHealthError(`Directory does not exist: ${root}`);
+    throw new NgHealthError(`Directory does not exist: ${root}`);
   }
   const file = path.join(root, CONFIG_FILE_NAME);
   if ((await pathExists(file)) && !opts.force) {
-    throw new FeHealthError(`${CONFIG_FILE_NAME} already exists in ${root}`, {
+    throw new NgHealthError(`${CONFIG_FILE_NAME} already exists in ${root}`, {
       hint: 'Use --force to overwrite it.',
     });
   }

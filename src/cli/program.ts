@@ -2,7 +2,7 @@ import { Command, CommanderError, Option } from 'commander';
 import pc from 'picocolors';
 import { audit } from '../core/audit.js';
 import { REPORT_FORMATS } from '../core/config/schema.js';
-import { ExitCode, FeHealthError } from '../core/errors.js';
+import { ExitCode, NgHealthError } from '../core/errors.js';
 import { createLogger, type Logger, type LoggerOptions } from '../core/logger.js';
 import type { AuditCliFlags } from '../core/options.js';
 import { VERSION } from '../version.js';
@@ -18,7 +18,7 @@ export function buildProgram(
   io: Pick<LoggerOptions, 'stdout' | 'stderr'> = {},
 ): Command {
   const program = new Command()
-    .name('fe-health')
+    .name('ng-health')
     .description('Audit Angular codebases and produce a scored, actionable health report.')
     .version(VERSION, '-v, --version', 'print the version')
     .showHelpAfterError('(run with --help for usage)')
@@ -42,7 +42,7 @@ export function buildProgram(
     .option('-o, --out <dir>', 'output directory for reports')
     .option('--only <checks>', 'run only these check ids/categories (comma-separated)', collect)
     .option('--skip <checks>', 'skip these check ids/categories (comma-separated)', collect)
-    .option('-c, --config <file>', `config file (default: <path>/fe-health.config.json)`)
+    .option('-c, --config <file>', `config file (default: <path>/ng-health.config.json)`)
     .option('--ci', 'CI mode: no spinner, Markdown summary, fail on thresholds')
     .option('--url <url>', 'audit a running app (runtime checks) instead of serving the build')
     .option('--routes <routes>', 'routes for runtime checks, comma-separated (default: /)', collect)
@@ -61,7 +61,7 @@ export function buildProgram(
 
   program
     .command('init')
-    .description('write a fe-health.config.json with defaults')
+    .description('write a ng-health.config.json with defaults')
     .argument('[path]', 'directory to write the config to', '.')
     .option('--force', 'overwrite an existing config')
     .action(async (dir: string, opts: { force?: boolean }) => {
@@ -86,7 +86,7 @@ export async function runCli(argv: string[], loggerOptions: LoggerOptions = {}):
       // --help / --version exit 0; usage errors are tool errors.
       return err.exitCode === 0 ? ExitCode.Pass : ExitCode.ToolError;
     }
-    if (err instanceof FeHealthError) {
+    if (err instanceof NgHealthError) {
       logger.error(err.message);
       if (err.hint) logger.info(pc.dim(err.hint));
       if (verbose && err.cause) logger.debug(String((err.cause as Error).stack ?? err.cause));

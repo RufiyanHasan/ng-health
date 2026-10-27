@@ -1,6 +1,6 @@
 import path from 'node:path';
 import semver from 'semver';
-import { FeHealthError } from '../errors.js';
+import { NgHealthError } from '../errors.js';
 import { pathExists, readJsonFile } from '../fs.js';
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -154,8 +154,8 @@ export async function detectProject(root: string): Promise<ProjectInfo> {
 
   const declared = deps['@angular/core'];
   if (!ws && !declared) {
-    throw new FeHealthError(`No Angular project found in ${absRoot}`, {
-      hint: 'Expected an angular.json or a package.json depending on @angular/core. Pass the project path: fe-health audit <path>',
+    throw new NgHealthError(`No Angular project found in ${absRoot}`, {
+      hint: 'Expected an angular.json or a package.json depending on @angular/core. Pass the project path: ng-health audit <path>',
     });
   }
 

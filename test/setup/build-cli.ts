@@ -13,19 +13,19 @@ declare module 'vitest' {
 
 /**
  * Builds the real CLI binary before the integration tests, so they exercise exactly what
- * `npx fe-health` runs, even on a clean clone where `npm test` runs before `npm run build`.
+ * `npx ng-health` runs, even on a clean clone where `npm test` runs before `npm run build`.
  * Output goes under node_modules so dependencies resolve normally.
  */
 export default async function setup(project: TestProject) {
   const root = path.resolve(import.meta.dirname, '../..');
-  const outDir = path.join(root, 'node_modules/.cache/fe-health-test-cli');
+  const outDir = path.join(root, 'node_modules/.cache/ng-health-test-cli');
   await build({
     config: false,
     entry: { 'cli/index': path.join(root, 'src/cli/index.ts') },
     outDir,
     format: ['esm'],
     platform: 'node',
-    target: 'node22',
+    target: 'node24',
     external: [
       ...Object.keys(pkg.dependencies),
       ...Object.keys(pkg.optionalDependencies),

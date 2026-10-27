@@ -7,7 +7,7 @@ const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.optionalD
 export default defineConfig({
   entry: { index: 'src/index.ts', 'cli/index': 'src/cli/index.ts' },
   format: ['esm'],
-  target: 'node22',
+  target: 'node24',
   platform: 'node',
   external: [...external, /^lighthouse\//],
   dts: { entry: { index: 'src/index.ts' } },

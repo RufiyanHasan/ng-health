@@ -33,8 +33,8 @@ describe('githubAnnotations', () => {
       ],
     };
     expect(githubAnnotations(report, '/repo/apps/web', '/repo')).toEqual([
-      '::error file=apps/web/src/a.ts,line=3,title=fe-health%3A angular/onpush::Bad, very: bad%0A100%25 Fix',
-      '::warning file=apps/web/src/b.ts,title=fe-health%3A angular/onpush::Meh Tune',
+      '::error file=apps/web/src/a.ts,line=3,title=ng-health%3A angular/onpush::Bad, very: bad%0A100%25 Fix',
+      '::warning file=apps/web/src/b.ts,title=ng-health%3A angular/onpush::Meh Tune',
     ]);
     expect(githubAnnotations(report, '/elsewhere', '/repo')).toEqual([]);
   });
@@ -91,11 +91,11 @@ describe('CI mode', () => {
     expect(stdout[0]?.startsWith(MARKDOWN_MARKER)).toBe(true);
     expect(stdout.join('\n')).not.toContain('┌'); // no console table
     expect(stdout).toContain(
-      '::error file=test/fixtures/unhealthy/src/app/dashboard/dashboard.component.ts,line=22,title=fe-health%3A angular/subscriptions::DashboardComponent: subscribe() without cleanup (no takeUntilDestroyed/async pipe/DestroyRef cleanup). Prefer the async pipe or toSignal(); otherwise add `takeUntilDestroyed(this.destroyRef)` to the pipe.',
+      '::error file=test/fixtures/unhealthy/src/app/dashboard/dashboard.component.ts,line=22,title=ng-health%3A angular/subscriptions::DashboardComponent: subscribe() without cleanup (no takeUntilDestroyed/async pipe/DestroyRef cleanup). Prefer the async pipe or toSignal(); otherwise add `takeUntilDestroyed(this.destroyRef)` to the pipe.',
     );
     const summary = await readFile(path.join(dir, 'summary.md'), 'utf8');
     expect(summary.startsWith(`# existing\n${MARKDOWN_MARKER}`)).toBe(true);
-    expect(await readFile(path.join(dir, 'out', 'fe-health-report.md'), 'utf8')).toBe(
+    expect(await readFile(path.join(dir, 'out', 'ng-health-report.md'), 'utf8')).toBe(
       `${stdout[0]}`,
     );
     expect(stderr.find((l) => l.startsWith('Quality gate failed: Overall score'))).toBeDefined();

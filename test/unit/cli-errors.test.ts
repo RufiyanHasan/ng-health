@@ -8,7 +8,7 @@ vi.mock('../../src/core/audit.js', () => ({
 }));
 
 const { runCli } = await import('../../src/cli/program.js');
-const { FeHealthError } = await import('../../src/core/errors.js');
+const { NgHealthError } = await import('../../src/core/errors.js');
 const { audit } = await import('../../src/core/audit.js');
 
 function capture() {
@@ -40,7 +40,7 @@ describe('CLI error handling', () => {
 
   it('prints the cause of tool errors in verbose mode', async () => {
     vi.mocked(audit).mockRejectedValueOnce(
-      new FeHealthError('Config broken', { cause: new Error('root cause') }),
+      new NgHealthError('Config broken', { cause: new Error('root cause') }),
     );
     const err = capture();
     expect(

@@ -1,9 +1,9 @@
-# Publishes fe-health when a GitHub release is published (tag vX.Y.Z), or manually.
+# Publishes ng-health when a GitHub release is published (tag vX.Y.Z), or manually.
 #
 # Registry setup (repository → Settings → Secrets and variables → Actions):
 #   vars.NPM_REGISTRY_URL  e.g. https://npm.example.internal/ (defaults to https://registry.npmjs.org/)
 #   secrets.NPM_TOKEN      a token allowed to publish to that registry
-# For a scoped package on an internal registry, rename "name" in package.json (e.g. @acme/fe-health).
+# For a scoped package on an internal registry, rename "name" in package.json (e.g. @acme/ng-health).
 
 name: Publish
 

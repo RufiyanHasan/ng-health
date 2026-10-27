@@ -1,4 +1,4 @@
-# Learning fe-health
+# Learning ng-health
 
 A study guide for explaining this project in interviews, to the team and to clients. Every
 section points at real files, so you can open the code while you read.
@@ -81,7 +81,7 @@ interface. That's what makes the tool extensible.
 | 1   | **commander** for the CLI                                              | Mature, typed, handles repeatable and comma-separated options and subcommands.                                                        | citty (lighter, less battle-tested for variadic flags), yargs (heavier API). |
 | 2   | **zod** for config validation                                          | One source of truth: runtime validation, TypeScript types _and_ the published JSON Schema come from the same definition.              | ajv + hand-written JSON Schema (types drift), no validation (bad UX).        |
 | 3   | **Exit codes 0/1/2**                                                   | CI needs to tell "your code failed the gate" (1) apart from "the tool broke" (2).                                                     | 0/1 only (can't tell real failures from misconfiguration).                   |
-| 4   | **Diagnostics on stderr, reports on stdout**                           | `fe-health … > summary.md` captures only the report; logs don't pollute it.                                                           | Everything on stdout (breaks piping).                                        |
+| 4   | **Diagnostics on stderr, reports on stdout**                           | `ng-health … > summary.md` captures only the report; logs don't pollute it.                                                           | Everything on stdout (breaks piping).                                        |
 | 5   | **Plugin architecture** (`Check` interface + registry)                 | New checks need zero core changes; teams can ship private checks.                                                                     | One big `if`/`switch` per check type (every new check edits the core).       |
 | 6   | **Runner isolates failures** (timeout + try/catch + output validation) | A buggy plugin or a hung `npm audit` must not crash a 5-minute audit.                                                                 | Let errors propagate (one bad check kills the run).                          |
 | 7   | **Ratio-based scores** for "N of M" checks                             | 30 components without OnPush in a big app shouldn't score 0 when 270 have it.                                                         | Fixed penalties per finding only (punishes large codebases).                 |
@@ -90,7 +90,7 @@ interface. That's what makes the tool extensible.
 | 10  | **One shared parse** (`ctx.shared`) for all 8 Angular checks           | Parse the project once and query it 8 times; much faster on big codebases.                                                            | Each check re-parses (8× the work).                                          |
 | 11  | **Version-aware rules**                                                | Angular 22 made OnPush and `strictTemplates` the defaults, and TS 6 made `strict` the default. Version-blind rules give wrong advice. | One rule for all versions (we hit and fixed exactly this bug).               |
 | 12  | **One Chrome per audit, shared via CDP**                               | Lighthouse and axe reuse one browser; the login session carries over to both.                                                         | Separate browsers (slower; login lost between tools).                        |
-| 13  | **Runtime libraries are optional and lazy-loaded**                     | `npx fe-health` stays fast; without Chrome the runtime checks skip with a reason.                                                     | Hard dependencies (heavy install, crash without Chrome).                     |
+| 13  | **Runtime libraries are optional and lazy-loaded**                     | `npx ng-health` stays fast; without Chrome the runtime checks skip with a reason.                                                     | Hard dependencies (heavy install, crash without Chrome).                     |
 | 14  | **One report object, many reporters**                                  | HTML, JSON, Markdown and console can't disagree; adding a format is easy.                                                             | Each format computes its own data (inconsistent numbers).                    |
 | 15  | **Self-contained HTML** (inline CSS/JS, escaped content)               | Works offline, safe to email to clients, prints to PDF; no CDN calls leak data.                                                       | A framework/CDN-based page (network, privacy and XSS risks).                 |
 | 16  | **Fingerprints without line numbers**                                  | Moving code shouldn't make findings look "new" in trends.                                                                             | Fingerprint by file+line (noisy diffs).                                      |
@@ -149,7 +149,7 @@ excluded and the remaining weights rescaled, so missing Chrome doesn't count per
 
 1. _Exit code 2: is the code unhealthy?_ No. The tool couldn't run (bad config, wrong folder,
    bad flag). Read the `✖` line on stderr. Only exit 1 means the quality gate failed.
-2. _Why "Detected…" goes to stderr:_ `fe-health audit --ci > summary.md` must capture only the
+2. _Why "Detected…" goes to stderr:_ `ng-health audit --ci > summary.md` must capture only the
    report, because it becomes the PR comment, and log lines would break it.
 3. _Adding a config option:_ one place, the zod schema. Validation, `z.infer` types and the
    generated JSON Schema all follow, and tests catch a stale schema file or missing docs.
@@ -190,7 +190,7 @@ _(Phases 4–8: added as we review them.)_
 
 ### 30 seconds
 
-"I built **fe-health**, a Node/TypeScript CLI that audits Angular codebases and produces a
+"I built **ng-health**, a Node/TypeScript CLI that audits Angular codebases and produces a
 scored health report. It checks dependencies and vulnerabilities, bundle size against budgets,
 Angular anti-patterns using real AST parsing, code hygiene, and runs Lighthouse and axe in Chrome
 for performance and accessibility. Every check is a plugin, so new checks don't touch the core.
@@ -200,7 +200,7 @@ a quality gate that fails the build when scores or vulnerabilities cross configu
 ### 2 minutes
 
 "The problem: teams and clients ask 'how healthy is this Angular app?', and the answer is usually
-a manual, inconsistent review. fe-health automates that.
+a manual, inconsistent review. ng-health automates that.
 
 Architecturally it's a **plugin system**. The core defines a `Check` interface: id, category, and
 a `run()` that returns findings and a score. A runner executes checks in parallel with per-check

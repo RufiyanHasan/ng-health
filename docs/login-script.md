@@ -1,12 +1,12 @@
 # Auditing auth-protected routes (`--login-script`)
 
 The runtime checks (Lighthouse and axe) open each route in a headless Chrome. If your routes
-need a logged-in user, give fe-health a **login script**: a small ES module that signs in once
+need a logged-in user, give ng-health a **login script**: a small ES module that signs in once
 before the runtime checks run.
 
 ## How it works
 
-1. fe-health starts Chrome and attaches Playwright to it.
+1. ng-health starts Chrome and attaches Playwright to it.
 2. Your script's default export is called with a Playwright `page`. Log in with it like a user would.
 3. The session (cookies, `localStorage`, `sessionStorage`) lives in the browser's default
    context, which both axe and Lighthouse use. Lighthouse's storage reset is turned off for
@@ -49,10 +49,10 @@ export default async ({ page, baseUrl }) => {
 
 ```bash
 # against a deployed environment
-E2E_USER=… E2E_PASSWORD=… npx fe-health audit --url https://staging.example.com \
+E2E_USER=… E2E_PASSWORD=… npx ng-health audit --url https://staging.example.com \
   --routes /,/orders,/settings --login-script ./login.mjs
 
-# or in fe-health.config.json (path relative to the config file)
+# or in ng-health.config.json (path relative to the config file)
 { "runtime": { "routes": ["/", "/orders"], "loginScript": "./login.mjs" } }
 ```
 
@@ -66,5 +66,5 @@ resolved from the config file's directory.
 - A route that still redirects to the login page will be audited as the login page. Check the
   Lighthouse route scores in the report if results look suspiciously good.
 - Keep credentials in environment variables or CI secrets, never in the script or config.
-- The script runs with your user's permissions on your machine. fe-health sends nothing anywhere;
+- The script runs with your user's permissions on your machine. ng-health sends nothing anywhere;
   only your own app receives the requests.

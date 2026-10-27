@@ -38,7 +38,7 @@ export function githubAnnotations(
       const props = [
         `file=${escapeProperty(file)}`,
         ...(f.line ? [`line=${f.line}`] : []),
-        `title=${escapeProperty(`fe-health: ${f.checkId}`)}`,
+        `title=${escapeProperty(`ng-health: ${f.checkId}`)}`,
       ];
       return [`::${level} ${props.join(',')}::${escapeData(`${f.message} ${f.fixHint}`)}`];
     })

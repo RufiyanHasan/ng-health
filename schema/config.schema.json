@@ -1,5 +1,5 @@
 {
-  "title": "fe-health configuration",
+  "title": "ng-health configuration",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
@@ -159,7 +159,7 @@
       "type": "object",
       "properties": {
         "dir": {
-          "default": "fe-health-report",
+          "default": "ng-health-report",
           "type": "string"
         },
         "formats": {

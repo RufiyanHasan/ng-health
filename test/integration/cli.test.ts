@@ -34,7 +34,7 @@ const validate = ajv.compile(
 );
 
 async function readReport(dir: string): Promise<AuditReport> {
-  const json: unknown = JSON.parse(await readFile(path.join(dir, 'fe-health-report.json'), 'utf8'));
+  const json: unknown = JSON.parse(await readFile(path.join(dir, 'ng-health-report.json'), 'utf8'));
   expect(validate(json), JSON.stringify(validate.errors)).toBe(true);
   return json as AuditReport;
 }
@@ -48,7 +48,7 @@ const staticFindings = (r: AuditReport) =>
         `${f.severity} ${f.checkId} ${f.file ?? '-'}${f.line ? `:${f.line}` : ''} | ${f.message}`,
     );
 
-describe('fe-health CLI binary', { timeout: 180_000 }, () => {
+describe('ng-health CLI binary', { timeout: 180_000 }, () => {
   it('Definition of Done: unhealthy fixture → html+json report, exit 1', async () => {
     const out = await makeTempProject({});
     const r = await run([
@@ -60,15 +60,15 @@ describe('fe-health CLI binary', { timeout: 180_000 }, () => {
       out,
     ]);
     expect(r.code).toBe(1);
-    expect((await readdir(out)).sort()).toEqual(['fe-health-report.html', 'fe-health-report.json']);
+    expect((await readdir(out)).sort()).toEqual(['ng-health-report.html', 'ng-health-report.json']);
 
     const report = await readReport(out);
     expect(report.passed).toBe(false);
-    expect(report.tool).toEqual({ name: 'fe-health', version: pkg.version });
+    expect(report.tool).toEqual({ name: 'ng-health', version: pkg.version });
     expect(report.checks.filter((c) => c.status === 'errored')).toEqual([]);
     expect(staticFindings(report)).toMatchSnapshot();
 
-    const html = await readFile(path.join(out, 'fe-health-report.html'), 'utf8');
+    const html = await readFile(path.join(out, 'ng-health-report.html'), 'utf8');
     expect(html).toContain('<title>Frontend health · unhealthy-app</title>');
     expect(html).toContain('Quality gate failed');
     expect(html).not.toMatch(/<script[^>]+src=/);
@@ -109,7 +109,7 @@ describe('fe-health CLI binary', { timeout: 180_000 }, () => {
     expect(r.stdout.startsWith(MARKDOWN_MARKER)).toBe(true);
     expect(r.stdout).not.toContain('Detected');
     expect(r.stderr).toContain('Detected unhealthy-app');
-    expect(await readFile(path.join(out, 'fe-health-report.md'), 'utf8')).toBe(
+    expect(await readFile(path.join(out, 'ng-health-report.md'), 'utf8')).toBe(
       r.stdout.trimEnd() + '\n',
     );
   });
@@ -125,7 +125,7 @@ describe('fe-health CLI binary', { timeout: 180_000 }, () => {
       '--out',
       out,
       '--baseline',
-      path.join(out, 'base/fe-health-report.json'),
+      path.join(out, 'base/ng-health-report.json'),
     ]);
     const report = await readReport(out);
     expect(r.code).toBe(1);
@@ -138,7 +138,7 @@ describe('fe-health CLI binary', { timeout: 180_000 }, () => {
     expect((await run(['--version'])).stdout.trim()).toBe(pkg.version);
     expect((await run(['init'], dir)).code).toBe(0);
     expect(
-      JSON.parse(await readFile(path.join(dir, 'fe-health.config.json'), 'utf8')),
+      JSON.parse(await readFile(path.join(dir, 'ng-health.config.json'), 'utf8')),
     ).toHaveProperty('thresholds');
     expect((await run(['init'], dir)).code).toBe(2);
     const missing = await run(['audit', path.join(dir, 'nope')]);

@@ -8,7 +8,7 @@ export const REPORT_FORMATS = ['console', 'html', 'json', 'md'] as const;
 export const ReportFormatSchema = z.enum(REPORT_FORMATS);
 export type ReportFormat = z.infer<typeof ReportFormatSchema>;
 
-export const CONFIG_FILE_NAME = 'fe-health.config.json';
+export const CONFIG_FILE_NAME = 'ng-health.config.json';
 
 const score = z.number().min(0).max(100);
 
@@ -93,7 +93,7 @@ export const ConfigSchema = z.strictObject({
   plugins: z.array(z.string()).default([]),
   output: z
     .strictObject({
-      dir: z.string().default('fe-health-report'),
+      dir: z.string().default('ng-health-report'),
       formats: z.array(ReportFormatSchema).min(1).default(['console', 'html']),
     })
     .prefault({}),

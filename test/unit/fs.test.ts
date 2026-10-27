@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseJsonc, readJsonFile } from '../../src/core/fs.js';
-import { FeHealthError } from '../../src/core/errors.js';
+import { NgHealthError } from '../../src/core/errors.js';
 import { makeTempProject } from '../helpers/tmp.js';
 
 describe('parseJsonc', () => {
@@ -33,9 +33,9 @@ describe('readJsonFile', () => {
     expect(await readJsonFile(`${dir}/missing.json`)).toBeUndefined();
   });
 
-  it('throws a FeHealthError naming the file for invalid JSON', async () => {
+  it('throws a NgHealthError naming the file for invalid JSON', async () => {
     const dir = await makeTempProject({ 'bad.json': '{ nope' });
-    await expect(readJsonFile(`${dir}/bad.json`)).rejects.toThrow(FeHealthError);
+    await expect(readJsonFile(`${dir}/bad.json`)).rejects.toThrow(NgHealthError);
     await expect(readJsonFile(`${dir}/bad.json`)).rejects.toThrow(/bad\.json is not valid JSON/);
   });
 });

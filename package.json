@@ -1,8 +1,50 @@
 {
-  "name": "fe-health",
+  "name": "ng-health",
   "version": "0.1.0",
-  "description": "Audit Angular codebases and produce a scored, actionable health report.",
+  "description": "Audit Angular codebases and produce a scored, actionable health report. CLI and library.",
+  "keywords": [
+    "angular",
+    "audit",
+    "health-check",
+    "lighthouse",
+    "accessibility",
+    "bundle-size",
+    "cli",
+    "code-quality",
+    "wcag",
+    "static-analysis"
+  ],
+  "homepage": "TODO: https://github.com/<owner>/ng-health#readme",
+  "bugs": {
+    "url": "TODO: https://github.com/<owner>/ng-health/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "TODO: git+https://github.com/<owner>/ng-health.git"
+  },
+  "license": "MIT",
+  "author": "TODO: Your Name <you@example.com>",
+  "type": "module",
+  "bin": {
+    "ng-health": "./dist/cli/index.js"
+  },
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "tsup && node scripts/gen-schema.mjs",
     "dev": "tsup --watch",
@@ -14,15 +56,6 @@
     "test:unit": "vitest run --project unit",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [
-    "angular",
-    "audit",
-    "health",
-    "lighthouse",
-    "cli"
-  ],
-  "license": "MIT",
-  "type": "module",
   "dependencies": {
     "@angular/compiler": "^22.2.3",
     "cli-table3": "^0.6.5",
@@ -33,6 +66,12 @@
     "semver": "^7.8.5",
     "ts-morph": "^28.0.0",
     "zod": "^4.6.7"
+  },
+  "optionalDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "chrome-launcher": "^1.2.2",
+    "lighthouse": "^13.5.0",
+    "playwright-core": "^1.64.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -50,32 +89,5 @@
     "typescript-eslint": "^8.72.1",
     "vitest": "^5.0.5",
     "yaml": "^2.9.1"
-  },
-  "bin": {
-    "fe-health": "./dist/cli/index.js"
-  },
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "schema",
-    "docs",
-    "examples",
-    "CHANGELOG.md"
-  ],
-  "engines": {
-    "node": ">=22"
-  },
-  "optionalDependencies": {
-    "@axe-core/playwright": "^4.14.0",
-    "chrome-launcher": "^1.2.2",
-    "lighthouse": "^13.5.0",
-    "playwright-core": "^1.64.1"
   }
 }

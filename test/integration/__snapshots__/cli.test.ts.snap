@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`fe-health CLI binary > Definition of Done: unhealthy fixture → html+json report, exit 1 1`] = `
+exports[`ng-health CLI binary > Definition of Done: unhealthy fixture → html+json report, exit 1 1`] = `
 [
   "critical dependencies/angular-version - | Angular 17 is end-of-life since 2025-05-08 (5 majors behind 22); it no longer receives security fixes.",
   "high dependencies/deprecated package.json | protractor is deprecated or end-of-life.",

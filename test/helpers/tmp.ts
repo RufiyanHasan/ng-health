@@ -11,7 +11,7 @@ afterEach(async () => {
 
 /** Creates a temp directory with the given files (objects are written as JSON). */
 export async function makeTempProject(files: Record<string, string | object>): Promise<string> {
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'fe-health-'));
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'ng-health-'));
   created.push(dir);
   for (const [rel, content] of Object.entries(files)) {
     const file = path.join(dir, rel);

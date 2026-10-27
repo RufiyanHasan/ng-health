@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`markdown > renders a PR-comment summary 1`] = `
-"<!-- fe-health-report -->
+"<!-- ng-health-report -->
 ## Frontend health: **76/100 (C)** — ❌ failed
 
 acme-shop · Angular 19.2.4 · npm · single app · 2026-10-27
@@ -36,6 +36,6 @@ acme-shop · Angular 19.2.4 · npm · single app · 2026-10-27
 
 </details>
 
-<sub>Generated locally by fe-health v0.0.0-test. The full HTML report has every finding.</sub>
+<sub>Generated locally by ng-health v0.0.0-test. The full HTML report has every finding.</sub>
 "
 `;

@@ -1,11 +1,11 @@
 import { existsSync } from 'node:fs';
 
 /**
- * Finds a Chrome/Chromium executable: explicit config, FE_HEALTH_CHROME_PATH/CHROME_PATH,
+ * Finds a Chrome/Chromium executable: explicit config, NG_HEALTH_CHROME_PATH/CHROME_PATH,
  * installed Chrome (chrome-launcher's detection), then Playwright's downloaded Chromium.
  */
 export async function findChrome(configured?: string): Promise<string | undefined> {
-  const explicit = configured ?? process.env['FE_HEALTH_CHROME_PATH'] ?? process.env['CHROME_PATH'];
+  const explicit = configured ?? process.env['NG_HEALTH_CHROME_PATH'] ?? process.env['CHROME_PATH'];
   if (explicit) return existsSync(explicit) ? explicit : undefined;
   try {
     const { Launcher } = await import('chrome-launcher');

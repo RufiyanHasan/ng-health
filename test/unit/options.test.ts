@@ -38,7 +38,7 @@ describe('resolveAuditOptions', () => {
       '.',
       { format: ['html,md'], out: 'out', only: ['angular'], skip: ['hygiene'], verbose: true },
       config,
-      '/work/fe-health.config.json',
+      '/work/ng-health.config.json',
       '/work',
     );
     expect(o).toMatchObject({
@@ -47,7 +47,7 @@ describe('resolveAuditOptions', () => {
       only: ['angular'],
       skip: ['bundle', 'hygiene'],
       verbose: true,
-      configFile: '/work/fe-health.config.json',
+      configFile: '/work/ng-health.config.json',
     });
   });
 
@@ -60,7 +60,7 @@ describe('resolveAuditOptions', () => {
 
   it('resolves runtime flags: url, routes and login script paths', () => {
     const cfg = parseConfig({ runtime: { routes: ['/a'], loginScript: 'scripts/login.mjs' } });
-    const fromConfig = resolveAuditOptions('.', {}, cfg, '/proj/fe-health.config.json', '/work');
+    const fromConfig = resolveAuditOptions('.', {}, cfg, '/proj/ng-health.config.json', '/work');
     expect(fromConfig.runtime).toMatchObject({
       routes: ['/a'],
       loginScript: '/proj/scripts/login.mjs',
@@ -75,7 +75,7 @@ describe('resolveAuditOptions', () => {
         loginScript: 'login.mjs',
       },
       cfg,
-      '/proj/fe-health.config.json',
+      '/proj/ng-health.config.json',
       '/work',
     );
     expect(fromCli.runtime).toMatchObject({

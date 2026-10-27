@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Config, ReportFormat, RuntimeConfig } from './config/schema.js';
 import { REPORT_FORMATS } from './config/schema.js';
-import { FeHealthError } from './errors.js';
+import { NgHealthError } from './errors.js';
 
 /** Raw CLI flags for `audit`, as parsed by commander. */
 export interface AuditCliFlags {
@@ -51,7 +51,7 @@ export function parseFormats(values: string[]): ReportFormat[] {
   const formats = splitList(values);
   const invalid = formats.filter((f) => !(REPORT_FORMATS as readonly string[]).includes(f));
   if (invalid.length) {
-    throw new FeHealthError(`Unknown report format: ${invalid.join(', ')}`, {
+    throw new NgHealthError(`Unknown report format: ${invalid.join(', ')}`, {
       hint: `Supported formats: ${REPORT_FORMATS.join(', ')}`,
     });
   }
@@ -100,13 +100,13 @@ function resolveRuntime(
 ): RuntimeConfig {
   const routes = splitList(flags.routes);
   for (const r of routes) {
-    if (!r.startsWith('/')) throw new FeHealthError(`Routes must start with "/": ${r}`);
+    if (!r.startsWith('/')) throw new NgHealthError(`Routes must start with "/": ${r}`);
   }
   if (flags.url) {
     try {
       new URL(flags.url);
     } catch {
-      throw new FeHealthError(`Invalid --url: ${flags.url}`);
+      throw new NgHealthError(`Invalid --url: ${flags.url}`);
     }
   }
   // CLI paths are relative to the working directory, config paths to the config file.

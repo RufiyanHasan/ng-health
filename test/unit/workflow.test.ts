@@ -17,7 +17,7 @@ interface Step {
 }
 
 const workflow = parse(
-  await readFile(new URL('../../examples/github-actions/fe-health.yml', import.meta.url), 'utf8'),
+  await readFile(new URL('../../examples/github-actions/ng-health.yml', import.meta.url), 'utf8'),
 ) as {
   on: Record<string, unknown>;
   permissions: Record<string, string>;
@@ -81,11 +81,11 @@ describe('example GitHub Actions workflow', () => {
 
   it('audits in CI mode, uploads the report and comments even when the gate fails', () => {
     const auditStep = steps.find((s) => s.name === 'Audit');
-    expect(auditStep?.run).toContain('audit . --ci --format html,json,md --out fe-health-report');
-    expect(auditStep?.run).toContain('--baseline baseline/fe-health-report.json');
+    expect(auditStep?.run).toContain('audit . --ci --format html,json,md --out ng-health-report');
+    expect(auditStep?.run).toContain('--baseline baseline/ng-health-report.json');
     const upload = steps.find((s) => s.uses?.startsWith('actions/upload-artifact'));
     expect(upload?.if).toContain('always()');
-    expect(upload?.with?.['name']).toBe('fe-health-report');
+    expect(upload?.with?.['name']).toBe('ng-health-report');
     expect(steps.find((s) => s.uses?.startsWith('actions/github-script'))?.if).toContain(
       'always()',
     );
@@ -101,7 +101,7 @@ describe('example GitHub Actions workflow', () => {
 
   it('creates a comment, then updates it on the next run, and skips without a summary', async () => {
     const dir = await makeTempProject({
-      'fe-health-report/fe-health-report.md': `${MARKDOWN_MARKER}\n## Frontend health`,
+      'ng-health-report/ng-health-report.md': `${MARKDOWN_MARKER}\n## Frontend health`,
     });
     const first = await runCommentScript(dir, [
       { id: 1, body: 'unrelated', user: { type: 'User' } },

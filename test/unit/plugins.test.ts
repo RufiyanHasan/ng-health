@@ -13,16 +13,16 @@ describe('plugins', () => {
       'checks/one.mjs': pluginSource('custom/one'),
       'checks/many.mjs': `import one from './one.mjs';
         export default [{ ...one, id: 'custom/two' }, { ...one, id: 'custom/three' }];`,
-      'node_modules/fe-health-plugin-x/package.json': {
-        name: 'fe-health-plugin-x',
+      'node_modules/ng-health-plugin-x/package.json': {
+        name: 'ng-health-plugin-x',
         main: 'index.js',
         type: 'module',
       },
-      'node_modules/fe-health-plugin-x/index.js': `export const checks = [{ id: 'x/pkg', name: 'X', category: 'x', run: () => ({ findings: [] }) }];`,
+      'node_modules/ng-health-plugin-x/index.js': `export const checks = [{ id: 'x/pkg', name: 'X', category: 'x', run: () => ({ findings: [] }) }];`,
       'package.json': {},
     });
     const checks = await loadPlugins(
-      ['./checks/one.mjs', `${dir}/checks/many.mjs`, 'fe-health-plugin-x'],
+      ['./checks/one.mjs', `${dir}/checks/many.mjs`, 'ng-health-plugin-x'],
       dir,
       dir,
     );

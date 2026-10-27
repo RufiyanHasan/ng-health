@@ -112,11 +112,11 @@ describe('json + writeReports', () => {
       out: (m) => printed.push(m),
     });
     expect(files.map((f) => path.basename(f))).toEqual([
-      'fe-health-report.html',
-      'fe-health-report.json',
-      'fe-health-report.md',
+      'ng-health-report.html',
+      'ng-health-report.json',
+      'ng-health-report.md',
     ]);
-    expect(JSON.parse(await readFile(path.join(out, 'fe-health-report.json'), 'utf8'))).toEqual(
+    expect(JSON.parse(await readFile(path.join(out, 'ng-health-report.json'), 'utf8'))).toEqual(
       JSON.parse(renderJson(sampleReport())),
     );
     expect(printed).toHaveLength(1);

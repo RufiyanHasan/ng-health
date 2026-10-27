@@ -67,15 +67,15 @@ describe('README', () => {
   });
 
   it('plugin example works exactly as documented', async () => {
-    // Same code as the README, importing fe-health from source instead of the published package.
+    // Same code as the README, importing ng-health from source instead of the published package.
     const code = pluginExample.replace(
-      "from 'fe-health'",
+      "from 'ng-health'",
       `from '${path.join(repo, 'src/index.ts')}'`,
     );
     const dir = await makeTempProject({
       'package.json': { dependencies: { '@angular/core': '^22.0.0' } },
       'checks/todo-comments.mjs': code,
-      'fe-health.config.json': {
+      'ng-health.config.json': {
         plugins: ['./checks/todo-comments.mjs'],
         checks: { 'custom/todo-comments': { options: { max: 5 } } },
         weights: { custom: 5 },

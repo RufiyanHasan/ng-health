@@ -14,7 +14,7 @@ const schemaFile = new URL('../../schema/report.v1.json', import.meta.url);
 describe('report schema v1', () => {
   it('published schema/report.v1.json is up to date (run `npm run build`)', async () => {
     expect(JSON.parse(await readFile(schemaFile, 'utf8'))).toEqual({
-      title: 'fe-health report (v1)',
+      title: 'ng-health report (v1)',
       ...reportJsonSchema(),
     });
   });

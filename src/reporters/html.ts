@@ -148,7 +148,7 @@ function trend(report: AuditReport): string {
     )
     .join('');
   return `<section><h2>Trend vs. baseline</h2>
-<p class="muted">Baseline generated ${esc(t.baselineGeneratedAt.slice(0, 10))} by fe-health ${esc(t.baselineVersion)}.</p>
+<p class="muted">Baseline generated ${esc(t.baselineGeneratedAt.slice(0, 10))} by ng-health ${esc(t.baselineVersion)}.</p>
 <div class="scroll"><table class="compact"><thead><tr><th>Category</th><th class="num">Before</th><th class="num">After</th><th class="num">Δ</th></tr></thead>
 <tbody><tr><td><strong>Overall</strong></td><td class="num">${esc(scoreText(t.overall.before))}</td><td class="num">${esc(scoreText(t.overall.after))}</td><td class="num">${delta(t.overall.delta)}</td></tr>${rows}</tbody></table></div>
 <div class="two-col"><div><h3>New findings (${t.newFindings.length})</h3>${list(t.newFindings)}</div>
@@ -226,7 +226,7 @@ function bundleDetails(report: AuditReport): string {
             `<tr><td><code>${esc(x.path)}</code></td><td class="num">${esc(formatBytes(x.bytes))}</td><td class="barcell"><div class="bar thin"><span style="width:${((x.bytes / max) * 100).toFixed(1)}%"></span></div></td></tr>`,
         )
         .join('')}</tbody></table></div>`
-    : '<p class="muted">Module breakdown needs a stats file (fe-health passes --stats-json when it builds).</p>';
+    : '<p class="muted">Module breakdown needs a stats file (ng-health passes --stats-json when it builds).</p>';
   const lazy = m.largestLazyChunks.length
     ? `<h3>Largest lazy chunks</h3><div class="scroll"><table class="compact"><tbody>${m.largestLazyChunks
         .slice(0, 5)

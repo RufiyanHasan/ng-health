@@ -9,12 +9,12 @@ export type ExitCode = (typeof ExitCode)[keyof typeof ExitCode];
  * An expected, user-facing error. The CLI prints `message` (and `hint`, if any)
  * without a stack trace and exits with code 2.
  */
-export class FeHealthError extends Error {
+export class NgHealthError extends Error {
   readonly hint: string | undefined;
 
   constructor(message: string, options?: { hint?: string; cause?: unknown }) {
     super(message, { cause: options?.cause });
-    this.name = 'FeHealthError';
+    this.name = 'NgHealthError';
     this.hint = options?.hint;
   }
 }

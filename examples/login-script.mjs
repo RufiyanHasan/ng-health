@@ -1,6 +1,6 @@
-// Example fe-health login script.
-// Usage: fe-health audit --url https://staging.example.com --routes /,/orders --login-script ./login.mjs
-// or set "runtime": { "loginScript": "./login.mjs" } in fe-health.config.json.
+// Example ng-health login script.
+// Usage: ng-health audit --url https://staging.example.com --routes /,/orders --login-script ./login.mjs
+// or set "runtime": { "loginScript": "./login.mjs" } in ng-health.config.json.
 
 /** @param {{ page: import('playwright-core').Page, baseUrl: string, routes: string[] }} args */
 export default async function login({ page, baseUrl }) {

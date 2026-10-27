@@ -10,7 +10,7 @@ describe('parseConfig', () => {
     const c = parseConfig({});
     expect(c.skip).toEqual([]);
     expect(c.ignore).toEqual(DEFAULT_IGNORE);
-    expect(c.output).toEqual({ dir: 'fe-health-report', formats: ['console', 'html'] });
+    expect(c.output).toEqual({ dir: 'ng-health-report', formats: ['console', 'html'] });
     expect(c.thresholds).toEqual({ minOverallScore: 70, maxCriticalVulnerabilities: 0 });
     expect(c.offline).toBe(false);
   });
@@ -29,7 +29,7 @@ describe('parseConfig', () => {
       output: { formats: ['json'] },
     });
     expect(c.checks['bundle']).toBe(false);
-    expect(c.output).toEqual({ dir: 'fe-health-report', formats: ['json'] });
+    expect(c.output).toEqual({ dir: 'ng-health-report', formats: ['json'] });
     expect(c.severityPenalties).toEqual({ critical: 50 });
   });
 
@@ -55,12 +55,12 @@ describe('loadConfig', () => {
     expect(config.skip).toEqual([]);
   });
 
-  it('loads fe-health.config.json from the project root (JSONC allowed)', async () => {
+  it('loads ng-health.config.json from the project root (JSONC allowed)', async () => {
     const dir = await makeTempProject({
-      'fe-health.config.json': '{ // comment\n "skip": ["bundle"], }',
+      'ng-health.config.json': '{ // comment\n "skip": ["bundle"], }',
     });
     const { config, file } = await loadConfig(dir);
-    expect(file).toBe(`${dir}/fe-health.config.json`);
+    expect(file).toBe(`${dir}/ng-health.config.json`);
     expect(config.skip).toEqual(['bundle']);
   });
 
@@ -73,6 +73,6 @@ describe('loadConfig', () => {
 describe('published JSON schema', () => {
   it('is up to date with the zod schema (run `npm run build` to regenerate)', async () => {
     const committed = JSON.parse(await readFile('schema/config.schema.json', 'utf8'));
-    expect(committed).toEqual({ title: 'fe-health configuration', ...configJsonSchema() });
+    expect(committed).toEqual({ title: 'ng-health configuration', ...configJsonSchema() });
   });
 });

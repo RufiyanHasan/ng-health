@@ -49,7 +49,7 @@ describe('audit', () => {
   it('loads plugins declared in the config', async () => {
     const dir = await makeTempProject(
       angularApp({
-        'fe-health.config.json': {
+        'ng-health.config.json': {
           plugins: ['./my-check.mjs'],
           thresholds: { failOnSeverity: 'low' },
         },

@@ -8,7 +8,7 @@ import { loadConfig } from './config/loader.js';
 import { DEFAULT_SEVERITY_PENALTIES } from './config/schema.js';
 import { createBaseContext } from './context.js';
 import { detectProject, type ProjectInfo } from './detect/index.js';
-import { ExitCode, FeHealthError, errorMessage } from './errors.js';
+import { ExitCode, NgHealthError, errorMessage } from './errors.js';
 import { isDirectory } from './fs.js';
 import { silentLogger, type Logger } from './logger.js';
 import { resolveAuditOptions, type AuditCliFlags, type AuditOptions } from './options.js';
@@ -52,7 +52,7 @@ export async function audit(
   const startedAt = new Date();
   const absPath = path.resolve(projectPath);
   if (!(await isDirectory(absPath))) {
-    throw new FeHealthError(`Project path does not exist or is not a directory: ${absPath}`);
+    throw new NgHealthError(`Project path does not exist or is not a directory: ${absPath}`);
   }
   const { config, file } = await loadConfig(absPath, flags.config);
   const options = resolveAuditOptions(projectPath, flags, config, file);

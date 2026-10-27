@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ReportFormat } from '../core/config/schema.js';
-import { FeHealthError, errorMessage } from '../core/errors.js';
+import { NgHealthError, errorMessage } from '../core/errors.js';
 import type { Logger } from '../core/logger.js';
 import type { AuditReport } from '../core/report.js';
 import { renderConsole } from './console.js';
@@ -11,7 +11,7 @@ import { renderMarkdown } from './markdown.js';
 
 export { renderConsole, renderHtml, renderJson, renderMarkdown };
 
-export const REPORT_BASENAME = 'fe-health-report';
+export const REPORT_BASENAME = 'ng-health-report';
 
 const FILE_RENDERERS: Partial<
   Record<ReportFormat, { ext: string; render: (r: AuditReport) => string }>
@@ -40,7 +40,7 @@ export async function writeReports(
     await mkdir(outDir, { recursive: true });
     await Promise.all(files.map((f) => writeFile(f.file, f.content, 'utf8')));
   } catch (err) {
-    throw new FeHealthError(`Could not write reports to ${outDir}: ${errorMessage(err)}`, {
+    throw new NgHealthError(`Could not write reports to ${outDir}: ${errorMessage(err)}`, {
       cause: err,
     });
   }

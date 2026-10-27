@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { FeHealthError } from './errors.js';
+import { NgHealthError } from './errors.js';
 import { readJsonFile } from './fs.js';
 import type { AuditReport } from './report.js';
 import type { ReportedFinding } from './types.js';
@@ -25,17 +25,17 @@ const delta = (before: number | undefined, after: number | undefined) =>
 export async function loadBaseline(file: string): Promise<AuditReport> {
   const abs = path.resolve(file);
   const raw = await readJsonFile<Partial<AuditReport>>(abs);
-  if (!raw) throw new FeHealthError(`Baseline report not found: ${abs}`);
+  if (!raw) throw new NgHealthError(`Baseline report not found: ${abs}`);
   if (typeof raw.schemaVersion !== 'string' || !raw.schemaVersion.startsWith('1.')) {
-    throw new FeHealthError(
+    throw new NgHealthError(
       `Unsupported baseline schema version "${String(raw.schemaVersion)}" in ${abs}`,
       {
-        hint: 'Pass a JSON report produced by fe-health 1.x (--format json).',
+        hint: 'Pass a JSON report produced by ng-health 1.x (--format json).',
       },
     );
   }
   if (!Array.isArray(raw.findings) || !Array.isArray(raw.categories) || !raw.score) {
-    throw new FeHealthError(`${abs} is not a fe-health JSON report`);
+    throw new NgHealthError(`${abs} is not a ng-health JSON report`);
   }
   return raw as AuditReport;
 }
