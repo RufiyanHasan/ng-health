@@ -59,10 +59,7 @@ export function topFixes(
         severity: worst.severity,
         count: list.length,
         impact: Math.round(impact * 100) / 100,
-        message:
-          list.length === 1
-            ? worst.message
-            : `${checkNames.get(worst.checkId) ?? worst.checkId}: ${list.length} occurrences, e.g. ${worst.message}`,
+        message: groupMessage(list, worst, checkNames.get(worst.checkId) ?? worst.checkId),
         fixHint: worst.fixHint,
         docsUrl: worst.docsUrl,
         files: [...new Set(list.flatMap((f) => (f.file ? [f.file] : [])))].slice(0, 5),
@@ -76,4 +73,14 @@ export function topFixes(
     )
     .slice(0, limit)
     .map((fix, i) => ({ ...fix, rank: i + 1 }));
+}
+
+/** "Known vulnerabilities: 67 occurrences (5 critical, 52 high, 9 medium, 1 low), e.g. …" */
+function groupMessage(list: ReportedFinding[], worst: ReportedFinding, checkName: string): string {
+  if (list.length === 1) return worst.message;
+  const counts = SEVERITIES.map(
+    (s) => [s, list.filter((f) => f.severity === s).length] as const,
+  ).filter(([, n]) => n > 0);
+  const breakdown = counts.length > 1 ? ` (${counts.map(([s, n]) => `${n} ${s}`).join(', ')})` : '';
+  return `${checkName}: ${list.length} occurrences${breakdown}, e.g. ${worst.message}`;
 }

@@ -82,4 +82,25 @@ describe('topFixes', () => {
       ),
     ).toHaveLength(10);
   });
+
+  it('shows a severity breakdown when a fix covers mixed severities', () => {
+    const vuln = (severity: 'critical' | 'high' | 'low', message: string) =>
+      reported('dependencies/deprecated', {
+        severity,
+        message,
+        ruleId: 'vulnerable-package',
+        fixHint: 'Run "npm audit fix".',
+      });
+    const [fix] = rank([
+      vuln('high', 'b'),
+      vuln('critical', 'a'),
+      vuln('high', 'c'),
+      vuln('low', 'd'),
+    ]);
+    expect(fix).toMatchObject({
+      severity: 'critical',
+      count: 4,
+      message: 'Deprecated packages: 4 occurrences (1 critical, 2 high, 1 low), e.g. a',
+    });
+  });
 });

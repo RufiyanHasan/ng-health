@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `dependencies/outdated` no longer recommends TypeScript majors that the project's Angular
+  version doesn't support. TypeScript is checked against Angular's supported range, and packages
+  released in lockstep with Angular (`@ngrx/*`, `@angular-architects/*`, angular-eslint,
+  `@nx/angular`) are only flagged when they are behind the project's Angular major.
+- Top fixes that group findings of mixed severities now show the breakdown, e.g.
+  "67 occurrences (5 critical, 52 high, 9 medium, 1 low)".
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

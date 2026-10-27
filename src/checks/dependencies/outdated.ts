@@ -1,6 +1,9 @@
+import path from 'node:path';
 import semver from 'semver';
+import { readJsonFile } from '../../core/fs.js';
 import { defineCheck, skipCheck, type Finding } from '../../core/types.js';
 import { clampScore, listSome, parseJsonOutput, plural } from '../util.js';
+import { isAngularAligned, supportedTypescriptRange } from './angular-coupled.js';
 import { directDependencies, pmCommand, readPackageJson } from './package-json.js';
 
 interface OutdatedEntry {
@@ -49,6 +52,14 @@ export function parseOutdated(
 /** Angular framework packages are judged by dependencies/angular-version instead. */
 const isFramework = (name: string) => /^@angular(-devkit)?\//.test(name) || name === 'zone.js';
 
+/**
+ * Packages whose upgrade path is tied to Angular's: TypeScript (each Angular major supports a
+ * TypeScript range) and lockstep packages such as @ngrx/* (major N targets Angular N). They're
+ * judged against the project's Angular version, never against their own latest release:
+ * "upgrade TypeScript to 7" is wrong advice for an Angular 21 project.
+ */
+const isCoupled = (name: string) => name === 'typescript' || isAngularAligned(name);
+
 export default defineCheck({
   id: 'dependencies/outdated',
   name: 'Outdated packages',
@@ -69,9 +80,43 @@ export default defineCheck({
     const pkg = await readPackageJson(ctx);
     const direct = new Set(directDependencies(pkg).map((d) => d.name));
     const outdated = parseOutdated(json).filter((p) => direct.has(p.name));
-    const ownGaps = outdated.filter((p) => !isFramework(p.name));
+    const ownGaps = outdated.filter((p) => !isFramework(p.name) && !isCoupled(p.name));
 
     const findings: Finding[] = [];
+    const angularMajor = ctx.project.angular.major;
+    let coupledDebt = 0;
+
+    // TypeScript: only flag versions outside the range this Angular version supports.
+    const tsVersion = await installedOrDeclared(ctx, 'typescript', pkg);
+    const tsRange = await supportedTypescriptRange(ctx);
+    if (tsVersion && tsRange && !semver.satisfies(tsVersion, tsRange)) {
+      coupledDebt += 1;
+      findings.push({
+        severity: 'high',
+        ruleId: 'typescript-unsupported',
+        message: `TypeScript ${tsVersion} is outside the range ${
+          angularMajor === undefined ? 'your Angular version' : `Angular ${angularMajor}`
+        } supports (${tsRange}).`,
+        fixHint: `Install a supported version: npm i -D typescript@"${tsRange}". Newer TypeScript majors arrive with the next Angular upgrade.`,
+        file: 'package.json',
+        docsUrl: 'https://angular.dev/reference/versions',
+      });
+    }
+
+    // Lockstep packages: flag only when behind the project's Angular major.
+    for (const name of [...direct].filter(isAngularAligned).sort()) {
+      const version = await installedOrDeclared(ctx, name, pkg);
+      if (!version || angularMajor === undefined || semver.major(version) >= angularMajor) continue;
+      coupledDebt += 1;
+      findings.push({
+        severity: 'medium',
+        ruleId: 'behind-angular',
+        message: `${name} ${version} targets Angular ${semver.major(version)}, but the project uses Angular ${angularMajor}.`,
+        fixHint: `Upgrade it to match Angular: "ng update ${name}@${angularMajor}" (or the ${angularMajor}.x release).`,
+        file: 'package.json',
+      });
+    }
+
     for (const p of ownGaps.filter((p) => p.gap === 'major')) {
       findings.push({
         severity: p.majorsBehind >= 2 ? 'high' : 'medium',
@@ -98,9 +143,26 @@ export default defineCheck({
     const debt = ownGaps.reduce((s, p) => s + weight[p.gap] * Math.min(p.majorsBehind || 1, 3), 0);
     const total = [...direct].filter((n) => !isFramework(n)).length;
     return {
-      score: total ? clampScore(100 - (debt / total) * 100) : 100,
+      score: total ? clampScore(100 - ((debt + coupledDebt) / total) * 100) : 100,
       findings,
       meta: { outdated, directDependencies: direct.size },
     };
   },
 });
+
+/** Installed version from node_modules, else the lowest version allowed by package.json. */
+async function installedOrDeclared(
+  ctx: Parameters<typeof readPackageJson>[0],
+  name: string,
+  pkg: Awaited<ReturnType<typeof readPackageJson>>,
+): Promise<string | undefined> {
+  const installed = (
+    await readJsonFile<{ version?: string }>(
+      path.join(ctx.root, 'node_modules', name, 'package.json'),
+    ).catch(() => undefined)
+  )?.version;
+  if (installed && semver.valid(installed)) return installed;
+  const declared = pkg.dependencies?.[name] ?? pkg.devDependencies?.[name];
+  const min = declared && semver.validRange(declared) ? semver.minVersion(declared) : null;
+  return min?.version;
+}

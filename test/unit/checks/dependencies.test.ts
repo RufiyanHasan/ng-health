@@ -146,7 +146,6 @@ describe('dependencies/outdated', () => {
     const r = await runOn(outdated, fixture('unhealthy'), { context: { ...online, exec } });
     expect(calls).toEqual(['npm outdated --json']);
     expect(summarize(r)).toEqual([
-      ['high', 'package.json', null, 'typescript 5.4.5 is 2 major versions behind (latest 7.0.2).'],
       ['low', 'package.json', null, '1 package behind by a minor version: moment 2.29.4→2.30.1.'],
       [
         'low',
@@ -155,7 +154,8 @@ describe('dependencies/outdated', () => {
         '2 packages behind by a patch version: karma 6.4.0→6.4.4, rxjs 7.8.0→7.8.2.',
       ],
     ]);
-    expect(r.score).toBe(58);
+    // TypeScript 5.4 is within Angular 17's range (>=5.2 <5.5): no advice to jump to 7.
+    expect(r.score).toBe(92);
   });
 
   it('uses pnpm for pnpm projects and errors on unusable output', async () => {
@@ -350,5 +350,76 @@ describe('dependencies/deprecated', () => {
       ['medium', 'package.json', null, 'left-pad is deprecated: use String.prototype.padStart()'],
       ['high', 'package.json', null, 'tslint is deprecated or end-of-life.'],
     ]);
+  });
+});
+
+describe('Angular-coupled dependencies', () => {
+  const run = async (
+    deps: Record<string, string>,
+    outdatedJson: object,
+    extra: Record<string, string | object> = {},
+  ) => {
+    const dir = await makeTempProject({ 'package.json': { dependencies: deps }, ...extra });
+    const { exec } = fakeExec({
+      'npm outdated': { stdout: JSON.stringify(outdatedJson), exitCode: 1 },
+    });
+    return runOn(outdated, dir, { context: { offline: false, exec } });
+  };
+
+  it('never recommends a TypeScript major that Angular does not support', async () => {
+    const r = await run(
+      { '@angular/core': '^21.1.0', typescript: '~5.9.2' },
+      { typescript: { current: '5.9.3', wanted: '5.9.3', latest: '7.0.2' } },
+      { 'node_modules/typescript/package.json': { version: '5.9.3' } },
+    );
+    expect(r.findings).toEqual([]);
+    expect(r.score).toBe(100);
+  });
+
+  it('flags TypeScript outside the supported range, preferring the installed compiler-cli range', async () => {
+    const r = await run({ '@angular/core': '^22.0.0', typescript: '~5.9.2' }, {});
+    expect(summarize(r)).toEqual([
+      [
+        'high',
+        'package.json',
+        null,
+        'TypeScript 5.9.2 is outside the range Angular 22 supports (>=6.0 <6.1).',
+      ],
+    ]);
+    const installed = await run(
+      { '@angular/core': '^22.0.0', typescript: '~5.9.2' },
+      {},
+      {
+        'node_modules/@angular/compiler-cli/package.json': {
+          peerDependencies: { typescript: '>=5.9 <6.1' },
+        },
+      },
+    );
+    expect(installed.findings).toEqual([]);
+  });
+
+  it('judges lockstep packages against the Angular major, not their latest release', async () => {
+    const r = await run(
+      {
+        '@angular/core': '^21.1.0',
+        '@angular-architects/module-federation': '^21.0.0',
+        '@angular-architects/native-federation': '^20.3.1',
+        '@ngrx/store': '^21.0.0',
+      },
+      {
+        '@angular-architects/module-federation': { current: '21.0.0', latest: '22.0.0' },
+        '@angular-architects/native-federation': { current: '20.3.1', latest: '22.2.3' },
+        '@ngrx/store': { current: '21.0.0', latest: '22.0.1' },
+      },
+    );
+    expect(summarize(r)).toEqual([
+      [
+        'medium',
+        'package.json',
+        null,
+        '@angular-architects/native-federation 20.3.1 targets Angular 20, but the project uses Angular 21.',
+      ],
+    ]);
+    expect(r.findings[0]?.fixHint).toContain('ng update @angular-architects/native-federation@21');
   });
 });
