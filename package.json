@@ -14,13 +14,13 @@
     "wcag",
     "static-analysis"
   ],
-  "homepage": "TODO: https://github.com/<owner>/ng-health#readme",
+  "homepage": "https://github.com/RufiyanHasan/ng-health#readme",
   "bugs": {
-    "url": "TODO: https://github.com/<owner>/ng-health/issues"
+    "url": "https://github.com/RufiyanHasan/ng-health/issues"
   },
   "repository": {
     "type": "git",
-    "url": "TODO: git+https://github.com/<owner>/ng-health.git"
+    "url": "git+https://github.com/RufiyanHasan/ng-health.git"
   },
   "license": "MIT",
   "author": "Rufiyan Hasan",

@@ -1,7 +1,7 @@
 # ng-health
 
 [![npm version](https://img.shields.io/npm/v/ng-health.svg)](https://www.npmjs.com/package/ng-health)
-[![CI](https://github.com/OWNER/ng-health/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/ng-health/actions/workflows/ci.yml)
+[![CI](https://github.com/RufiyanHasan/ng-health/actions/workflows/ci.yml/badge.svg)](https://github.com/RufiyanHasan/ng-health/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/ng-health.svg)](LICENSE)
 [![node](https://img.shields.io/node/v/ng-health.svg)](https://nodejs.org)
 
@@ -13,9 +13,7 @@ ng-health runs entirely on your machine. It never uploads code or reports and ha
 The only network traffic goes to your npm registry (`npm outdated`/`audit`/`view`), and
 `--offline` turns that off.
 
-<!-- Screenshot: replace OWNER once the repository is public. -->
-
-![Sample HTML report](https://raw.githubusercontent.com/OWNER/ng-health/main/docs/report-screenshot.png)
+![Sample HTML report](https://raw.githubusercontent.com/RufiyanHasan/ng-health/main/docs/report-screenshot.png)
 
 ## Contents
 
