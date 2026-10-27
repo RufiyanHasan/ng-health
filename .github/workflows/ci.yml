@@ -41,3 +41,8 @@ jobs:
 
       - name: Package contents
         run: npm pack --dry-run
+
+      # Installs the packed tarball into a fresh project and exercises CLI + library usage.
+      - name: Smoke test
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run smoke

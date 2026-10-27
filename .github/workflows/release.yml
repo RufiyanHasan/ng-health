@@ -41,6 +41,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npm run smoke
 
       - name: Version PR or publish
         uses: changesets/action@v2

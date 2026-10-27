@@ -142,7 +142,13 @@ describe('repository workflows', () => {
       const wf = await load(name);
       const runs = Object.values(wf.jobs).flatMap((j) => j.steps.map((s) => s.run));
       expect(runs).toEqual(
-        expect.arrayContaining(['npm ci', 'npm run lint', 'npm test', 'npm run build']),
+        expect.arrayContaining([
+          'npm ci',
+          'npm run lint',
+          'npm test',
+          'npm run build',
+          'npm run smoke',
+        ]),
       );
       for (const run of runs.filter((r): r is string => Boolean(r))) {
         expect(() =>
