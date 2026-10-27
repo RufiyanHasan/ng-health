@@ -1,14 +1,14 @@
 import { Command, CommanderError, Option } from 'commander';
 import pc from 'picocolors';
-import pkg from '../../package.json' with { type: 'json' };
 import { audit } from '../core/audit.js';
 import { REPORT_FORMATS } from '../core/config/schema.js';
 import { ExitCode, FeHealthError } from '../core/errors.js';
 import { createLogger, type Logger, type LoggerOptions } from '../core/logger.js';
 import type { AuditCliFlags } from '../core/options.js';
+import { VERSION } from '../version.js';
 import { initCommand } from './commands/init.js';
 
-export const VERSION: string = pkg.version;
+export { VERSION } from '../version.js';
 
 const collect = (value: string, previous: string[] = []) => [...previous, value];
 
