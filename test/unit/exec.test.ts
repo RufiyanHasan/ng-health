@@ -26,7 +26,12 @@ describe('exec', () => {
   });
 
   it('rejects when the command cannot start or is aborted', async () => {
-    await expect(exec('definitely-not-a-command-xyz', [])).rejects.toThrow(/ENOENT/);
+    if (process.platform === 'win32') {
+      // Bare names run through cmd.exe there, which reports a missing command as exit code 1.
+      expect((await exec('definitely-not-a-command-xyz', [])).exitCode).not.toBe(0);
+    } else {
+      await expect(exec('definitely-not-a-command-xyz', [])).rejects.toThrow(/ENOENT/);
+    }
     const controller = new AbortController();
     const p = exec(node, ['-e', 'setTimeout(() => {}, 10000)'], { signal: controller.signal });
     controller.abort();

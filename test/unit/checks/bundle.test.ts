@@ -123,7 +123,11 @@ describe('bundle/size', () => {
   });
 
   it('runs ng build when the CLI is installed, unless --no-build', async () => {
-    const dir = await makeTempProject({ ...angularApp(), 'node_modules/.bin/ng': '#!/bin/sh\n' });
+    const dir = await makeTempProject({
+      ...angularApp(),
+      'node_modules/.bin/ng': '#!/bin/sh\n',
+      'node_modules/.bin/ng.cmd': '',
+    });
     const out = path.join(dir, 'dist/demo-app/browser');
     const { exec, calls } = fakeExec({
       'ng build': {},
@@ -142,7 +146,11 @@ describe('bundle/size', () => {
   });
 
   it('reports build failures as errored', async () => {
-    const dir = await makeTempProject({ ...angularApp(), 'node_modules/.bin/ng': '' });
+    const dir = await makeTempProject({
+      ...angularApp(),
+      'node_modules/.bin/ng': '',
+      'node_modules/.bin/ng.cmd': '',
+    });
     const { exec } = fakeExec({ 'ng build': { exitCode: 1, stderr: 'line1\nError: NG8001 boom' } });
     expect(await runOn(size, dir, { context: { exec } })).toMatchObject({
       status: 'errored',

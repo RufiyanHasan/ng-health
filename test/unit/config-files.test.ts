@@ -1,5 +1,6 @@
 import { cp, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../../src/core/config/loader.js';
 import { audit, CheckError, ConfigError } from '../../src/index.js';
@@ -7,7 +8,11 @@ import { angularApp, makeTempProject } from '../helpers/tmp.js';
 
 const repo = path.resolve(import.meta.dirname, '../..');
 const fromSource = (code: string) =>
-  code.replaceAll("from 'ng-health'", `from '${path.join(repo, 'src/index.ts')}'`);
+  // A file:// URL is the portable ESM specifier; a raw Windows path would contain backslash escapes.
+  code.replaceAll(
+    "from 'ng-health'",
+    `from '${pathToFileURL(path.join(repo, 'src/index.ts')).href}'`,
+  );
 
 describe('config files', () => {
   it.each([

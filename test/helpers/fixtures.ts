@@ -53,7 +53,8 @@ export function fakeExec(
 ) {
   const calls: string[] = [];
   const exec: ExecFn = async (cmd, args) => {
-    const key = [path.basename(cmd), ...args].join(' ');
+    // ng.cmd / npm.cmd on Windows match the same stub as ng / npm.
+    const key = [path.basename(cmd).replace(/\.(cmd|bat|exe)$/i, ''), ...args].join(' ');
     calls.push(key);
     const match = Object.keys(responses)
       .sort((a, b) => b.length - a.length)

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { buildProgram } from '../../src/cli/program.js';
 import { builtinChecks } from '../../src/checks/index.js';
@@ -81,7 +82,7 @@ describe('README', () => {
     // Same code as the README, importing ng-health from source instead of the published package.
     const code = pluginExample.replace(
       "from 'ng-health'",
-      `from '${path.join(repo, 'src/index.ts')}'`,
+      `from '${pathToFileURL(path.join(repo, 'src/index.ts')).href}'`,
     );
     const dir = await makeTempProject({
       'package.json': { dependencies: { '@angular/core': '^22.0.0' } },
