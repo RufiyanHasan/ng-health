@@ -1,13 +1,14 @@
 import path from 'node:path';
 import pc from 'picocolors';
 import { builtinChecks } from '../checks/index.js';
-import { writeReports } from '../reporters/index.js';
+import { githubAnnotations, writeStepSummary } from '../ci/github.js';
+import { renderMarkdown, writeReports } from '../reporters/index.js';
 import { computeTrend, loadBaseline } from './baseline.js';
 import { loadConfig } from './config/loader.js';
 import { DEFAULT_SEVERITY_PENALTIES } from './config/schema.js';
 import { createBaseContext } from './context.js';
 import { detectProject, type ProjectInfo } from './detect/index.js';
-import { ExitCode, FeHealthError } from './errors.js';
+import { ExitCode, FeHealthError, errorMessage } from './errors.js';
 import { isDirectory } from './fs.js';
 import type { Logger } from './logger.js';
 import { resolveAuditOptions, type AuditCliFlags, type AuditOptions } from './options.js';
@@ -33,6 +34,8 @@ export interface AuditDeps {
   checks?: Check[];
   /** Override context pieces (tests inject exec/now). */
   context?: Partial<BaseContext>;
+  /** Environment for CI integration (defaults to process.env). */
+  env?: NodeJS.ProcessEnv;
 }
 
 export async function audit(
@@ -135,6 +138,16 @@ export async function audit(
     logger.info(`Report written: ${rel.startsWith('..') ? file : rel}`);
   }
 
+  if (options.ci) await ciOutput(report, project.root, logger, deps.env ?? process.env);
+  const failed = report.thresholds.filter((t) => !t.passed);
+  if (failed.length) {
+    logger.error(
+      `Quality gate failed: ${failed.map((t) => `${t.description} ${t.actual ?? 'n/a'} (expected ${t.expected})`).join('; ')}`,
+    );
+  } else if (report.thresholds.length) {
+    logger.success('Quality gate passed');
+  }
+
   return {
     exitCode: report.passed ? ExitCode.Pass : ExitCode.ThresholdFailed,
     options,
@@ -155,4 +168,20 @@ export function describeProject(p: ProjectInfo): string {
   if (p.ssr) parts.push('SSR');
   if (p.nx) parts.push('Nx');
   return parts.join(' · ');
+}
+
+/** CI mode: Markdown summary on stdout; on GitHub Actions also annotations and the job summary. */
+async function ciOutput(report: AuditReport, root: string, logger: Logger, env: NodeJS.ProcessEnv) {
+  const markdown = renderMarkdown(report);
+  logger.out(markdown);
+  if (env['GITHUB_ACTIONS'] !== 'true') return;
+  for (const line of githubAnnotations(report, root, env['GITHUB_WORKSPACE'] ?? process.cwd()))
+    logger.out(line);
+  if (env['GITHUB_STEP_SUMMARY']) {
+    try {
+      await writeStepSummary(env['GITHUB_STEP_SUMMARY'], markdown);
+    } catch (err) {
+      logger.warn(`Could not write the GitHub job summary: ${errorMessage(err)}`);
+    }
+  }
 }

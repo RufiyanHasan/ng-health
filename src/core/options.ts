@@ -68,8 +68,12 @@ export function resolveAuditOptions(
   const ci = Boolean(flags.ci);
   const cliFormats = parseFormats(flags.format ?? []);
   let formats = cliFormats.length ? cliFormats : [...config.output.formats];
-  // CI logs are read by humans in a log viewer: always include the Markdown summary.
-  if (ci && !formats.includes('md')) formats = [...formats, 'md'];
+  if (ci) {
+    // CI prints the Markdown summary instead of the console table (unless --format console
+    // was asked for explicitly), and always writes the .md file for PR comments.
+    if (!cliFormats.includes('console')) formats = formats.filter((f) => f !== 'console');
+    if (!formats.includes('md')) formats = [...formats, 'md'];
+  }
 
   const only = splitList(flags.only);
   return {

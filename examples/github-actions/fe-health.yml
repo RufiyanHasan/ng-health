@@ -1,0 +1,119 @@
+# fe-health quality gate for pull requests.
+#
+# Copy to .github/workflows/fe-health.yml. On every PR it:
+#   1. audits the app (static checks + Lighthouse/axe on the built app),
+#   2. compares against the latest report from main (score deltas, new/resolved findings),
+#   3. uploads the HTML report as a build artifact,
+#   4. posts or updates a single summary comment on the PR,
+#   5. fails the job when a threshold in fe-health.config.json is not met (exit code 1).
+# Pushes to main produce the baseline report used by step 2.
+#
+# fe-health runs entirely on the runner: no source code or report data is sent anywhere
+# except the summary comment and artifact you see below, both stored in your GitHub repo.
+
+name: Frontend health
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read # download the baseline artifact from main
+  pull-requests: write # post/update the summary comment
+
+concurrency:
+  group: fe-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # For a monorepo, point this at the Angular workspace, e.g. apps/web
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Google Chrome is preinstalled on GitHub-hosted Ubuntu runners and is picked up
+      # automatically. On self-hosted runners without Chrome, add:
+      #   - run: npx playwright install --with-deps chromium
+
+      - name: Download baseline report from main
+        if: github.event_name == 'pull_request'
+        continue-on-error: true # first run, expired artifact, etc.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ${{ github.workflow }}
+        run: |
+          run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$WORKFLOW" \
+            --branch main --event push --status success --limit 1 \
+            --json databaseId --jq '.[0].databaseId')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name fe-health-report --dir baseline
+          else
+            echo "No baseline report on main yet."
+          fi
+
+      - name: Audit
+        id: audit
+        env:
+          # Credentials for --login-script, if your routes need a login:
+          # E2E_USER: ${{ secrets.E2E_USER }}
+          # E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          NG_CLI_ANALYTICS: 'false'
+        run: |
+          args=(audit . --ci --format html,json,md --out fe-health-report)
+          if [ -f baseline/fe-health-report.json ]; then
+            args+=(--baseline baseline/fe-health-report.json)
+          fi
+          npx fe-health "${args[@]}"
+
+      - name: Upload HTML report
+        if: always() && steps.audit.outcome != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: fe-health-report
+          path: fe-health-report/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Comment on PR
+        if: always() && github.event_name == 'pull_request' && steps.audit.outcome != 'skipped'
+        continue-on-error: true # PRs from forks get a read-only token
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const file = 'fe-health-report/fe-health-report.md';
+            if (!fs.existsSync(file)) {
+              core.warning('No fe-health Markdown summary found; skipping the PR comment.');
+              return;
+            }
+            const marker = '<!-- fe-health-report -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            let body = fs.readFileSync(file, 'utf8');
+            if (body.length > 60000) body = body.slice(0, 60000) + '\n\n…(truncated)';
+            body += `\n[Full HTML report: download the "fe-health-report" artifact](${runUrl})\n`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((c) => c.user?.type === 'Bot' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
