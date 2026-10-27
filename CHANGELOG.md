@@ -1,5 +1,11 @@
 # ng-health
 
+## 0.1.1
+
+### Patch Changes
+
+- First public release on npm (0.1.0 was reserved by an interrupted staged publish).
+
 ## 0.1.0
 
 ### Minor Changes
