@@ -3,7 +3,7 @@
 A study guide for explaining this project in interviews, to the team and to clients. Every
 section points at real files, so you can open the code while you read.
 
-**Teaching progress:** Phase 1 ✓ · Phase 2 ▸ in progress · Phases 3–8 to review
+**Teaching progress:** Phase 1 ✓ · Phase 2 ✓ · Phase 3 ▸ in progress · Phases 4–8 to review
 
 ---
 
@@ -154,7 +154,35 @@ excluded and the remaining weights rescaled, so missing Chrome doesn't count per
 3. _Adding a config option:_ one place, the zod schema. Validation, `z.infer` types and the
    generated JSON Schema all follow, and tests catch a stale schema file or missing docs.
 
-_(Phases 3–8: added as we review them.)_
+**Phase 2**
+
+1. _A check that hangs:_ it times out (120 s default), is marked "errored", is left out of the
+   score, and the audit continues. `Promise.race` stops the waiting; the `AbortSignal` kills the
+   hung child process through `ctx.exec`.
+2. _Why `ctx.exec`:_ tests inject recorded output (fast, offline, deterministic, edge cases on
+   demand); at runtime each check's `exec` carries its timeout signal and the project folder.
+3. _300 components, 30 without OnPush:_ penalties give 100 − 120 → 0; the ratio gives 90.
+   Ratios make scores comparable across project sizes.
+
+### Phase 3: Static checks
+
+**Q: Why AST parsing instead of regex?**
+A: Regex sees text; the AST sees structure. It tells a `subscribe()` inside an `@Component`
+class with `takeUntilDestroyed` in its pipe apart from one in a comment, string or service.
+That precision keeps false positives out of client reports.
+
+**Q: How did you keep the Angular analysis fast?**
+A: Syntax-only parsing in an in-memory ts-morph project (no type checker, no import
+resolution), parsed once and shared by all 8 Angular checks via `ctx.shared`. The trade-off is
+no type information, covered by targeted heuristics (signal properties recognized by their
+initializer).
+
+**Q: How do you avoid false positives?**
+A: Real parsers, explicit exemptions for safe-by-design patterns (HttpClient, ActivatedRoute),
+version awareness (Angular 22 defaults, TypeScript ranges), and validation on real projects. Three
+wrong rules were found that way, and each became a regression test.
+
+_(Phases 4–8: added as we review them.)_
 
 ---
 
