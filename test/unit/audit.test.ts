@@ -77,12 +77,12 @@ describe('audit', () => {
     // Runtime checks (real Chrome) are covered by test/e2e/runtime.test.ts.
     const flags = { skip: ['performance', 'accessibility'] };
     const healthy = await audit(fixture('healthy'), flags, silentLogger);
-    expect(healthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 4 });
+    expect(healthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 5 });
     expect(healthy.report.score.overall).toBe(100);
     expect(healthy.exitCode).toBe(0);
 
     const unhealthy = await audit(fixture('unhealthy'), flags, silentLogger);
-    expect(unhealthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 4 });
+    expect(unhealthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 5 });
     expect(unhealthy.report.score.overall).toBeLessThan(40);
     expect(unhealthy.report.thresholds.find((t) => t.id === 'minOverallScore')?.passed).toBe(false);
     expect(unhealthy.report.thresholds.find((t) => t.id === 'maxInitialBundleKb')).toMatchObject({

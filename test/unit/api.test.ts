@@ -88,7 +88,7 @@ describe('audit()', () => {
     expect(result.trend?.overall.delta).toBeLessThan(0);
     expect(events[0]).toBe('project-detected');
     expect(events[1]).toBe('checks-started');
-    expect(events.filter((e) => e === 'check')).toHaveLength(17); // every selected check, including self-skipped ones
+    expect(events.filter((e) => e === 'check')).toHaveLength(18); // every selected check, including self-skipped ones
   });
 
   it('throws typed errors', async () => {

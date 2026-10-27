@@ -11,6 +11,7 @@ import bundleSize from './bundle/size.js';
 import dependenciesAngularVersion from './dependencies/angular-version.js';
 import dependenciesDeprecated from './dependencies/deprecated.js';
 import dependenciesOutdated from './dependencies/outdated.js';
+import dependenciesPeerConflicts from './dependencies/peer-conflicts.js';
 import dependenciesVulnerabilities from './dependencies/vulnerabilities.js';
 import hygieneCoverage from './hygiene/coverage.js';
 import hygieneTests from './hygiene/tests.js';
@@ -25,6 +26,7 @@ export const builtinChecks: Check[] = [
   dependenciesOutdated,
   dependenciesVulnerabilities,
   dependenciesDeprecated,
+  dependenciesPeerConflicts,
   bundleSize,
   angularOnPush,
   angularTemplateCalls,
