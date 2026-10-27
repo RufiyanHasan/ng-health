@@ -3,7 +3,7 @@
 A study guide for explaining this project in interviews, to the team and to clients. Every
 section points at real files, so you can open the code while you read.
 
-**Teaching progress:** Phase 1 ▸ in progress · Phases 2–8 to review
+**Teaching progress:** Phase 1 ✓ · Phase 2 ▸ in progress · Phases 3–8 to review
 
 ---
 
@@ -122,7 +122,39 @@ targets. It takes the Angular version from `node_modules/@angular/core`, falling
 range in `package.json`. The package manager comes from the `packageManager` field or the
 lockfile, searching up the folder tree for monorepos.
 
-_(Phases 2–8: added as we review them.)_
+### Phase 2: Check plugin architecture
+
+**Q: How do you stop a third-party plugin from breaking your tool?**
+A: Three layers in `src/core/runner.ts`:
+
+- try/catch around `run()`
+- a timeout via `Promise.race` plus an `AbortSignal`, so a hang can't stall the run
+- zod validation of the returned data, so malformed output can't corrupt the report
+
+Each failure is contained to that one check and reported as "errored".
+
+**Q: Why dependency injection for checks?**
+A: Checks receive `ctx.exec`, `ctx.readText` and similar instead of importing `child_process`
+or `fs`. Tests inject fakes (recorded `npm audit` output) to stay fast, offline and
+deterministic. The runner can also wrap `exec` per check to attach that check's timeout signal.
+
+**Q: How is the overall score calculated, and what if Chrome is missing?**
+A: A category score is the weighted mean of its completed checks. The overall score is the
+weighted mean of the categories (defaults 20/15/20/15/15/15). Skipped or errored checks are
+excluded and the remaining weights rescaled, so missing Chrome doesn't count performance as 0.
+
+### Understanding checks (with model answers)
+
+**Phase 1**
+
+1. _Exit code 2: is the code unhealthy?_ No. The tool couldn't run (bad config, wrong folder,
+   bad flag). Read the `✖` line on stderr. Only exit 1 means the quality gate failed.
+2. _Why "Detected…" goes to stderr:_ `fe-health audit --ci > summary.md` must capture only the
+   report, because it becomes the PR comment, and log lines would break it.
+3. _Adding a config option:_ one place, the zod schema. Validation, `z.infer` types and the
+   generated JSON Schema all follow, and tests catch a stale schema file or missing docs.
+
+_(Phases 3–8: added as we review them.)_
 
 ---
 
