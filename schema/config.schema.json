@@ -1,0 +1,191 @@
+{
+  "title": "fe-health configuration",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "checks": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "timeoutMs": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "options": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "only": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skip": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "weights": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "severityPenalties": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+        ]
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "thresholds": {
+      "default": {
+        "minOverallScore": 70,
+        "maxCriticalVulnerabilities": 0
+      },
+      "type": "object",
+      "properties": {
+        "minOverallScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "minCategoryScores": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "maxInitialBundleKb": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "maxCriticalVulnerabilities": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxCriticalA11yViolations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failOnSeverity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ignore": {
+      "default": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.angular/**",
+        "**/coverage/**"
+      ],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "plugins": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "output": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "dir": {
+          "default": "fe-health-report",
+          "type": "string"
+        },
+        "formats": {
+          "default": [
+            "console",
+            "html"
+          ],
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "console",
+              "html",
+              "json",
+              "md"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "offline": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

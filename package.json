@@ -1,0 +1,64 @@
+{
+  "name": "fe-health",
+  "version": "0.1.0",
+  "description": "Audit Angular codebases and produce a scored, actionable health report.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup && node scripts/gen-schema.mjs",
+    "dev": "tsup --watch",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "angular",
+    "audit",
+    "health",
+    "lighthouse",
+    "cli"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "commander": "^15.0.0",
+    "fast-glob": "^3.3.3",
+    "ora": "^9.4.1",
+    "picocolors": "^1.1.1",
+    "semver": "^7.8.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "@types/semver": "^7.8.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
+  },
+  "bin": {
+    "fe-health": "./dist/cli/index.js"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}
