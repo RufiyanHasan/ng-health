@@ -4,9 +4,21 @@ const STRICT = { lines: 85, statements: 85, functions: 85, branches: 80 };
 
 export default defineConfig({
   test: {
-    include: ['test/**/*.test.ts'],
     globalSetup: ['test/setup/build-cli.ts'],
     testTimeout: 20000,
+    projects: [
+      { extends: true, test: { name: 'unit', include: ['test/unit/**/*.test.ts'] } },
+      {
+        extends: true,
+        // These launch Chrome + Lighthouse. Running them one file at a time keeps Lighthouse
+        // timings stable and avoids CPU contention between concurrent browsers.
+        test: {
+          name: 'browser',
+          include: ['test/e2e/**/*.test.ts', 'test/integration/**/*.test.ts'],
+          fileParallelism: false,
+        },
+      },
+    ],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],

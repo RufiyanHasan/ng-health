@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
-    "test:unit": "vitest run test/unit"
+    "test:unit": "vitest run --project unit"
   },
   "keywords": [
     "angular",

@@ -15,6 +15,7 @@ import { resolveAuditOptions, type AuditCliFlags, type AuditOptions } from './op
 import { loadPlugins } from './plugins.js';
 import { createProgress } from './progress.js';
 import { selectChecks, validateRegistry } from './registry.js';
+import { onShutdown } from './shutdown.js';
 import { buildReport, type AuditReport } from './report.js';
 import { runChecks, type BaseContext } from './runner.js';
 import { computeScores } from './scoring.js';
@@ -86,6 +87,8 @@ export async function audit(
     ...deps.context,
   });
   let ran: CheckResult[];
+  // If interrupted, still stop the local server and Chrome instead of orphaning them.
+  const offShutdown = onShutdown(() => context.dispose());
   try {
     ran = await runChecks(selection.selected, context, {
       severityPenalties: penalties,
@@ -98,6 +101,7 @@ export async function audit(
       },
     });
   } finally {
+    offShutdown();
     await context.dispose();
   }
   progress.stop();

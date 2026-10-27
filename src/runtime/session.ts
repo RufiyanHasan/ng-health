@@ -141,6 +141,8 @@ async function openSession(ctx: CheckContext): Promise<RuntimeSession> {
       chromePath,
       chromeFlags: chromeFlags(),
       logLevel: 'silent',
+      // The CLI handles SIGINT/SIGTERM itself and disposes Chrome along with everything else.
+      handleSIGINT: false,
     });
   } catch (err) {
     skipCheck(`Chromium failed to start (${errorMessage(err)}). ${CHROME_HELP}`);
