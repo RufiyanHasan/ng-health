@@ -23,7 +23,7 @@
     "url": "TODO: git+https://github.com/<owner>/ng-health.git"
   },
   "license": "MIT",
-  "author": "TODO: Your Name <you@example.com>",
+  "author": "Rufiyan Hasan",
   "type": "module",
   "bin": {
     "ng-health": "./dist/cli/index.js"
