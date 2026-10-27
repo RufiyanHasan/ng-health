@@ -43,7 +43,10 @@ export function buildProgram(
     .option('-o, --out <dir>', 'output directory for reports')
     .option('--only <checks>', 'run only these check ids/categories (comma-separated)', collect)
     .option('--skip <checks>', 'skip these check ids/categories (comma-separated)', collect)
-    .option('-c, --config <file>', `config file (default: <path>/ng-health.config.json)`)
+    .option(
+      '-c, --config <file>',
+      'config file: .ts, .mts, .js, .mjs, .cjs or .json (default: <path>/ng-health.config.*)',
+    )
     .option('--ci', 'CI mode: no spinner, Markdown summary, fail on thresholds')
     .option('--url <url>', 'audit a running app (runtime checks) instead of serving the build')
     .option('--routes <routes>', 'routes for runtime checks, comma-separated (default: /)', collect)

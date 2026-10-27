@@ -59,11 +59,11 @@ describe('README', () => {
     }
   });
 
-  it('plugin example is kept in sync with examples/plugins/todo-comments.mjs', async () => {
+  it('plugin example is kept in sync with examples/custom-check/checks/todo-comments.mjs', async () => {
     expect(pluginExample).toContain("id: 'custom/todo-comments'");
-    expect(await readFile(path.join(repo, 'examples/plugins/todo-comments.mjs'), 'utf8')).toBe(
-      pluginExample,
-    );
+    expect(
+      await readFile(path.join(repo, 'examples/custom-check/checks/todo-comments.mjs'), 'utf8'),
+    ).toBe(pluginExample);
   });
 
   it('plugin example works exactly as documented', async () => {

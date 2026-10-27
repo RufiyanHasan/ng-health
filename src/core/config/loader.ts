@@ -1,8 +1,8 @@
 import path from 'node:path';
 import type { z } from 'zod';
-import { ConfigError } from '../errors.js';
-import { readJsonFile } from '../fs.js';
-import { CONFIG_FILE_NAME, ConfigSchema, type Config, type ConfigInput } from './schema.js';
+import { ConfigError, errorMessage } from '../errors.js';
+import { pathExists, readJsonFile } from '../fs.js';
+import { CONFIG_FILE_NAMES, ConfigSchema, type Config, type ConfigInput } from './schema.js';
 
 export interface LoadedConfig {
   config: Config;
@@ -29,9 +29,37 @@ export function parseConfig(raw: unknown, source = 'config'): Config {
   return result.data;
 }
 
+/** Loads TypeScript/JavaScript modules (configs, TS plugins) without a build step. */
+export async function importModule(file: string, opts: { default: boolean }): Promise<unknown> {
+  const { createJiti } = await import('jiti');
+  // moduleCache off: re-running an audit in the same process picks up config edits.
+  const jiti = createJiti(import.meta.url, {
+    moduleCache: false,
+    fsCache: false,
+    // Plugins need the real namespace (`export const checks`); interop would fake a `default`.
+    interopDefault: opts.default,
+  });
+  return opts.default ? jiti.import(file, { default: true }) : jiti.import(file);
+}
+
+async function readConfigFile(file: string): Promise<unknown> {
+  if (file.endsWith('.json')) return readJsonFile(file);
+  let mod: unknown;
+  try {
+    mod = await importModule(file, { default: true });
+  } catch (err) {
+    throw new ConfigError(`Could not load ${path.basename(file)}: ${errorMessage(err)}`, {
+      cause: err,
+    });
+  }
+  // `export default defineConfig({...})`, or a (possibly async) function returning the config.
+  return typeof mod === 'function' ? await (mod as () => unknown)() : mod;
+}
+
 /**
- * Loads the config: an inline object, an explicit file path, or `ng-health.config.json` in the
- * project root. A missing default config is fine (defaults apply); a missing explicit one is not.
+ * Loads the config: an inline object, an explicit file path, or the first
+ * `ng-health.config.{ts,mts,js,mjs,cjs,json}` in the project root. A missing default config is
+ * fine (defaults apply); a missing explicit one, or two competing default files, is an error.
  */
 export async function loadConfig(
   projectRoot: string,
@@ -40,11 +68,22 @@ export async function loadConfig(
   if (source !== undefined && typeof source !== 'string') {
     return { config: parseConfig(source, 'inline config'), file: undefined };
   }
-  const file = source ? path.resolve(source) : path.join(projectRoot, CONFIG_FILE_NAME);
-  const raw = await readJsonFile(file);
-  if (raw === undefined) {
-    if (source) throw new ConfigError(`Config file not found: ${file}`);
-    return { config: parseConfig({}), file: undefined };
+  let file: string | undefined;
+  if (source) {
+    file = path.resolve(source);
+    if (!(await pathExists(file))) throw new ConfigError(`Config file not found: ${file}`);
+  } else {
+    const found: string[] = [];
+    for (const name of CONFIG_FILE_NAMES) {
+      if (await pathExists(path.join(projectRoot, name))) found.push(name);
+    }
+    if (found.length > 1) {
+      throw new ConfigError(`Found several config files: ${found.join(', ')}`, {
+        hint: 'Keep one of them (ng-health would not know which to use).',
+      });
+    }
+    if (!found[0]) return { config: parseConfig({}), file: undefined };
+    file = path.join(projectRoot, found[0]);
   }
-  return { config: parseConfig(raw, path.basename(file)), file };
+  return { config: parseConfig(await readConfigFile(file), path.basename(file)), file };
 }

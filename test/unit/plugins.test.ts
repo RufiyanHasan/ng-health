@@ -40,6 +40,9 @@ describe('plugins', () => {
     await expect(loadPlugins(['./bad.mjs'], dir, dir)).rejects.toThrow(
       /does not export a valid check/,
     );
-    expect(() => checksFromModule({}, 'empty')).toThrow(/does not export a valid check/);
+    expect(() => checksFromModule({}, 'empty')).toThrow(/has no default export or "checks" export/);
+    expect(() => checksFromModule({ default: [] }, 'empty')).toThrow(
+      /exports an empty list of checks/,
+    );
   });
 });

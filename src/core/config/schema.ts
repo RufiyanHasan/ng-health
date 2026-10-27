@@ -9,7 +9,17 @@ export const REPORT_FORMATS = ['console', 'html', 'json', 'md'] as const;
 export const ReportFormatSchema = z.enum(REPORT_FORMATS);
 export type ReportFormat = z.infer<typeof ReportFormatSchema>;
 
+/** Written by `ng-health init`. */
 export const CONFIG_FILE_NAME = 'ng-health.config.json';
+/** Config files looked up in the project root, in this order. */
+export const CONFIG_FILE_NAMES = [
+  'ng-health.config.ts',
+  'ng-health.config.mts',
+  'ng-health.config.js',
+  'ng-health.config.mjs',
+  'ng-health.config.cjs',
+  'ng-health.config.json',
+];
 
 const score = z.number().min(0).max(100);
 
