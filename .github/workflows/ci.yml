@@ -14,25 +14,25 @@ concurrency:
 
 jobs:
   verify:
-    name: Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: ${{ matrix.os }} / Node LTS
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        node: [24, 26]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          node-version: lts/*
           cache: npm
 
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      # Includes the real-Chrome tests: Google Chrome is preinstalled on ubuntu-latest.
+      # Includes the real-Chrome tests: Google Chrome is preinstalled on both runner images.
       - run: npm test
       - run: npm run build
 
@@ -41,11 +41,3 @@ jobs:
 
       - name: Package contents
         run: npm pack --dry-run
-
-      - name: Coverage report
-        if: always() && matrix.node == 24
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage
-          path: coverage/
-          if-no-files-found: ignore

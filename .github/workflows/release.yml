@@ -1,0 +1,58 @@
+# Versioning and publishing with Changesets.
+#
+# On every push to main:
+#   - pending changesets → opens/updates a "chore: version packages" PR (version bump + CHANGELOG)
+#   - that PR merged (no pending changesets, unpublished version) → publishes to npm with
+#     provenance, tags the release and creates a GitHub release
+#
+# Setup: add an npm automation token as the NPM_TOKEN repository secret. Nothing else.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write # version commit, git tags, GitHub releases
+  pull-requests: write # the version PR
+  id-token: write # npm provenance (OIDC)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      - name: Version PR or publish
+        uses: changesets/action@v2
+        with:
+          version-script: npm run version-packages
+          # `changeset publish` runs `npm publish` for versions not yet on npm (no-op otherwise);
+          # NPM_CONFIG_PROVENANCE makes that `npm publish --provenance`.
+          publish-script: npm run release
+          commit-message: 'chore: version packages'
+          pr-title: 'chore: version packages'
+          create-github-releases: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'

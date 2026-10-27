@@ -49,48 +49,52 @@ describe.skipIf(!chrome)('runtime checks against real Chrome', { timeout: 180_00
     expect(report.categories.find((c) => c.id === 'accessibility')?.score).toBe(100);
   });
 
-  it('stops Chrome when the CLI is interrupted with SIGTERM (e.g. a cancelled CI job)', async () => {
-    const out = await makeTempProject({});
-    const child = spawn(
-      process.execPath,
-      [
-        inject('cliPath'),
-        'audit',
-        fixture('healthy'),
-        '--only',
-        'performance',
-        '--verbose',
-        '--out',
-        out,
-      ],
-      {
-        stdio: ['ignore', 'ignore', 'pipe'],
-      },
-    );
-    let stderr = '';
-    const port = await new Promise<number>((resolve, reject) => {
-      child.stderr.on('data', (d: Buffer) => {
-        stderr += d.toString();
-        const m = /listening on port (\d+)/.exec(stderr);
-        if (m) resolve(Number(m[1]));
-      });
-      child.on('exit', () => reject(new Error(`CLI exited before Chrome started:\n${stderr}`)));
-    });
-    const alive = () =>
-      fetch(`http://127.0.0.1:${port}/json/version`).then(
-        () => true,
-        () => false,
+  // Windows has no POSIX signals: child.kill('SIGTERM') terminates the process outright.
+  it.skipIf(process.platform === 'win32')(
+    'stops Chrome when the CLI is interrupted with SIGTERM (e.g. a cancelled CI job)',
+    async () => {
+      const out = await makeTempProject({});
+      const child = spawn(
+        process.execPath,
+        [
+          inject('cliPath'),
+          'audit',
+          fixture('healthy'),
+          '--only',
+          'performance',
+          '--verbose',
+          '--out',
+          out,
+        ],
+        {
+          stdio: ['ignore', 'ignore', 'pipe'],
+        },
       );
-    expect(await alive()).toBe(true);
+      let stderr = '';
+      const port = await new Promise<number>((resolve, reject) => {
+        child.stderr.on('data', (d: Buffer) => {
+          stderr += d.toString();
+          const m = /listening on port (\d+)/.exec(stderr);
+          if (m) resolve(Number(m[1]));
+        });
+        child.on('exit', () => reject(new Error(`CLI exited before Chrome started:\n${stderr}`)));
+      });
+      const alive = () =>
+        fetch(`http://127.0.0.1:${port}/json/version`).then(
+          () => true,
+          () => false,
+        );
+      expect(await alive()).toBe(true);
 
-    const exited = new Promise<number | null>((resolve) =>
-      child.on('exit', (code) => resolve(code)),
-    );
-    child.kill('SIGTERM');
-    expect(await exited).toBe(143);
-    expect(stderr).toContain('received SIGTERM, cleaning up');
-    expect(await alive()).toBe(false);
-  });
+      const exited = new Promise<number | null>((resolve) =>
+        child.on('exit', (code) => resolve(code)),
+      );
+      child.kill('SIGTERM');
+      expect(await exited).toBe(143);
+      expect(stderr).toContain('received SIGTERM, cleaning up');
+      expect(await alive()).toBe(false);
+    },
+  );
 
   describe('with a login script', () => {
     let server: http.Server;

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseFormats, resolveOutput, splitList, toAuditOptions } from '../../src/cli/flags.js';
 import { parseConfig } from '../../src/core/config/loader.js';
@@ -47,11 +48,11 @@ describe('CLI flags', () => {
     const config = parseConfig({ output: { dir: 'reports', formats: ['json', 'console'] } });
     expect(resolveOutput({}, config, '/work')).toEqual({
       formats: ['json', 'console'],
-      outDir: '/work/reports',
+      outDir: path.resolve('/work/reports'),
     });
     expect(resolveOutput({ format: ['html,md'], out: 'out' }, config, '/work')).toEqual({
       formats: ['html', 'md'],
-      outDir: '/work/out',
+      outDir: path.resolve('/work/out'),
     });
     expect(resolveOutput({ ci: true }, config, '/w').formats).toEqual(['json', 'md']);
   });
@@ -65,12 +66,16 @@ describe('resolveOptions (library)', () => {
 
   it('falls back to config values', () => {
     expect(resolveOptions('app', {}, config, undefined, '/work')).toMatchObject({
-      projectPath: '/work/app',
+      projectPath: path.resolve('/work/app'),
       only: undefined,
       skip: ['bundle'],
       build: true,
       offline: false,
-      runtime: { routes: ['/a'], loginScript: '/work/scripts/login.mjs', formFactor: 'mobile' },
+      runtime: {
+        routes: ['/a'],
+        loginScript: path.resolve('/work/scripts/login.mjs'),
+        formFactor: 'mobile',
+      },
     });
   });
 
@@ -98,12 +103,12 @@ describe('resolveOptions (library)', () => {
       runtime: {
         url: 'https://staging.example.com',
         routes: ['/', '/cart'],
-        loginScript: '/work/login.mjs',
+        loginScript: path.resolve('/work/login.mjs'),
       },
     });
     expect(
       resolveOptions('.', {}, config, '/proj/ng-health.config.json', '/work').runtime.loginScript,
-    ).toBe('/proj/scripts/login.mjs');
+    ).toBe(path.resolve('/proj/scripts/login.mjs'));
   });
 
   it('rejects invalid routes and urls with ConfigError', () => {

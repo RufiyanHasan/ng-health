@@ -1,0 +1,4 @@
+# LF everywhere, including Windows checkouts: fixture sizes, line numbers and snapshots
+# must be byte-identical on every OS.
+* text=auto eol=lf
+*.png binary

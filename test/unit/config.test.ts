@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { loadConfig, parseConfig } from '../../src/core/config/loader.js';
@@ -60,7 +61,7 @@ describe('loadConfig', () => {
       'ng-health.config.json': '{ // comment\n "skip": ["bundle"], }',
     });
     const { config, file } = await loadConfig(dir);
-    expect(file).toBe(`${dir}/ng-health.config.json`);
+    expect(file).toBe(path.join(dir, 'ng-health.config.json'));
     expect(config.skip).toEqual(['bundle']);
   });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exec } from '../../src/core/exec.js';
+import path from 'node:path';
+import { exec, quoteForCmd } from '../../src/core/exec.js';
 
 const node = process.execPath;
 
@@ -21,7 +22,7 @@ describe('exec', () => {
         env: { FE_X: 'y' },
       },
     );
-    expect(r.stdout).toBe('/|y');
+    expect(r.stdout).toBe(`${path.resolve('/')}|y`);
   });
 
   it('rejects when the command cannot start or is aborted', async () => {
@@ -30,5 +31,12 @@ describe('exec', () => {
     const p = exec(node, ['-e', 'setTimeout(() => {}, 10000)'], { signal: controller.signal });
     controller.abort();
     await expect(p).rejects.toThrow(/abort/i);
+  });
+
+  it('quotes arguments for cmd.exe when a shell is needed on Windows', () => {
+    expect(quoteForCmd('left-pad@^1.3.0')).toBe('"left-pad@^1.3.0"');
+    expect(quoteForCmd('C:\\Program Files\\x.cmd')).toBe('"C:\\Program Files\\x.cmd"');
+    expect(quoteForCmd('say "hi"')).toBe('"say ""hi"""');
+    expect(quoteForCmd('--json')).toBe('--json');
   });
 });

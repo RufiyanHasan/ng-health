@@ -1,38 +1,31 @@
-# Changelog
+# ng-health
 
-All notable changes to this project are documented here. The format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
-[Semantic Versioning](https://semver.org/). The JSON report has its own version
-(`schemaVersion`, currently `1.0`).
+## 0.1.0
 
-## [Unreleased]
+### Minor Changes
 
-### Fixed
-
-- `dependencies/outdated` no longer recommends TypeScript majors that the project's Angular
-  version doesn't support. TypeScript is checked against Angular's supported range, and packages
-  released in lockstep with Angular (`@ngrx/*`, `@angular-architects/*`, angular-eslint,
-  `@nx/angular`) are only flagged when they are behind the project's Angular major.
-- Top fixes that group findings of mixed severities now show the breakdown, e.g.
-  "67 occurrences (5 critical, 52 high, 9 medium, 1 low)".
-
-## [0.1.0] - 2026-10-27
-
-### Added
+First release: a CLI and library that audits Angular codebases and produces a scored,
+actionable health report.
 
 - `ng-health audit`, `ng-health init` and `--version`, with exit codes 0 (pass), 1 (threshold
-  failed), 2 (tool error) and clean shutdown on SIGINT/SIGTERM.
-- `ng-health.config.json` validated with zod, plus a published JSON Schema.
+  failed) and 2 (tool error), plus clean shutdown on SIGINT/SIGTERM.
+- Library API: `audit()`, `generateReport()`, `defineConfig()`, `defineCheck()`, and typed
+  errors (`ConfigError`, `CheckError`, `ProjectError`). The library never prints, writes files
+  or exits, and supports cancellation through an `AbortSignal`.
+- Config as `ng-health.config.{ts,mts,js,mjs,cjs,json}`, validated with zod; JSON Schemas ship
+  in `dist/schema/`.
 - Auto-detection of the Angular version, package manager, workspace layout, SSR and Nx.
-- Plugin architecture: `defineCheck`, parallel runner with per-check timeouts and isolation,
-  weighted category and overall scores, and thresholds.
-- Built-in checks for dependencies (Angular support status, outdated, vulnerabilities,
-  deprecated), bundle size and budgets, eight Angular anti-patterns, code hygiene, Lighthouse,
-  and axe-core WCAG.
-- `--url`, `--routes` and `--login-script` for auditing deployed and auth-protected apps.
-- HTML (self-contained, print-friendly), JSON (`schema/report.v1.json`), Markdown and console
-  reports; Top 10 fixes; `--baseline` trends.
-- `--ci` mode with GitHub annotations and job summary, plus an example GitHub Actions workflow.
-
-[Unreleased]: https://github.com/OWNER/ng-health/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/OWNER/ng-health/releases/tag/v0.1.0
+- Plugin architecture: custom checks in JavaScript or TypeScript, validated at load time;
+  parallel runner with per-check timeouts and isolation; weighted scores and thresholds.
+- Built-in checks for:
+  - dependencies: Angular support status, outdated packages judged against the project's
+    Angular version, vulnerabilities, deprecated packages
+  - bundle size and budgets
+  - eight Angular anti-patterns
+  - code hygiene
+  - Lighthouse
+  - axe-core WCAG
+- `--url`, `--routes` and `--login-script` for deployed and auth-protected apps.
+- Reports: HTML (self-contained, print-friendly), JSON (`report.v1.json`), Markdown and
+  console, with Top 10 fixes and `--baseline` trends.
+- `--ci` mode with GitHub annotations and job summary.

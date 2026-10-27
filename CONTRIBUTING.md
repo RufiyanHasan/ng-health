@@ -80,9 +80,47 @@ Guidelines for checks:
 
 ## Commits and releases
 
-- Use [Conventional Commits](https://www.conventionalcommits.org/): `feat(checks): …`,
-  `fix(runtime): …`, `docs: …`, `test: …`.
-- Add user-facing changes to the `Unreleased` section of `CHANGELOG.md`.
-- To release, bump `version` in `package.json`, move the changelog entries under the new version,
-  merge, then create a GitHub release tagged `vX.Y.Z`. The publish workflow verifies the tag
-  matches `package.json`, runs the full test suite, and publishes to the configured registry.
+### Commits
+
+Use [Conventional Commits](https://www.conventionalcommits.org/): `feat(checks): …`,
+`fix(runtime): …`, `docs: …`, `test: …`. Commit messages don't drive releases; changesets do.
+
+### Adding a changeset
+
+Every pull request with a user-facing change (new check, flag, API, fix, behavior change)
+needs a **changeset**: a small Markdown file that says what changed and how big the version
+bump is.
+
+```bash
+npx changeset            # pick patch / minor / major, then write a one-line summary
+git add .changeset/*.md  # commit it with your change
+```
+
+Pick the bump like this:
+
+- **patch** for bug fixes and false-positive fixes
+- **minor** for new checks, flags, options or exports (pre-1.0, also for breaking changes)
+- **major** for breaking changes after 1.0
+
+Docs-only, test-only and CI-only changes don't need one. You can
+`npx changeset --empty` if a reviewer asks.
+
+The summary becomes the `CHANGELOG.md` entry, so write it for users: "Bundle check now reads
+`browser-stats.json` (Angular 22)", not "fix size.ts".
+
+### How a release happens
+
+Releases are automated by `.github/workflows/release.yml` (Changesets):
+
+1. PRs with changesets are merged to `main`.
+2. The workflow opens (or updates) a **"chore: version packages"** PR. It bumps `version` in
+   `package.json`, moves the changeset summaries into `CHANGELOG.md`, and deletes the changeset
+   files.
+3. Review that PR (version number and changelog wording) and merge it.
+4. The workflow runs lint, tests and build, then publishes to npm with provenance
+   (`changeset publish`, which runs `npm publish --provenance` for versions not on npm yet).
+   It also tags `vX.Y.Z` and creates a GitHub release.
+
+The only setup is an npm automation token stored as the `NPM_TOKEN` repository secret.
+
+To preview what would be released: `npx changeset status --verbose`.

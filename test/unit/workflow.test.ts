@@ -127,46 +127,63 @@ describe('example GitHub Actions workflow', () => {
 });
 
 describe('repository workflows', () => {
-  for (const name of ['ci.yml', 'publish.yml']) {
-    it(`${name} parses and has valid shell steps`, async () => {
-      const wf = parse(
-        await readFile(new URL(`../../.github/workflows/${name}`, import.meta.url), 'utf8'),
-      ) as {
-        jobs: Record<string, { steps: Step[] }>;
-      };
-      const all = Object.values(wf.jobs).flatMap((j) => j.steps);
-      expect(all.some((s) => s.run === 'npm test')).toBe(true);
-      for (const step of all.filter((s) => s.run)) {
-        const shell = step.run!.replace(/\$\{\{[^}]*\}\}/g, 'X');
-        expect(() => execFileSync('bash', ['-n', '-c', shell])).not.toThrow();
+  const load = async (name: string) =>
+    parse(await readFile(new URL(`../../.github/workflows/${name}`, import.meta.url), 'utf8')) as {
+      on: Record<string, unknown>;
+      permissions: Record<string, string>;
+      jobs: Record<
+        string,
+        { 'runs-on': string; strategy?: { matrix: { os: string[] } }; steps: Step[] }
+      >;
+    };
+
+  for (const name of ['ci.yml', 'release.yml']) {
+    it(`${name} runs lint, tests and build, with valid shell steps`, async () => {
+      const wf = await load(name);
+      const runs = Object.values(wf.jobs).flatMap((j) => j.steps.map((s) => s.run));
+      expect(runs).toEqual(
+        expect.arrayContaining(['npm ci', 'npm run lint', 'npm test', 'npm run build']),
+      );
+      for (const run of runs.filter((r): r is string => Boolean(r))) {
+        expect(() =>
+          execFileSync('bash', ['-n', '-c', run.replace(/\$\{\{[^}]*\}\}/g, 'X')]),
+        ).not.toThrow();
       }
     });
   }
 
-  it('publish verifies the release tag against package.json', async () => {
-    const text = await readFile(
-      new URL('../../.github/workflows/publish.yml', import.meta.url),
-      'utf8',
-    );
-    const step = (parse(text) as { jobs: { publish: { steps: Step[] } } }).jobs.publish.steps.find(
-      (s) => s.name === 'Tag matches package.json version',
-    );
-    const run = (tag: string) => {
-      try {
-        execFileSync('bash', ['-c', step!.run!], {
-          env: { ...process.env, TAG: tag },
-          cwd: new URL('../..', import.meta.url).pathname,
-          stdio: 'pipe',
-        });
-        return 0;
-      } catch {
-        return 1;
-      }
-    };
-    const { version } = JSON.parse(
+  it('ci.yml covers Ubuntu and Windows on Node LTS', async () => {
+    const wf = await load('ci.yml');
+    expect(Object.keys(wf.on)).toEqual(['push', 'pull_request']);
+    expect(wf.jobs['verify']?.strategy?.matrix.os).toEqual(['ubuntu-latest', 'windows-latest']);
+    const setup = wf.jobs['verify']?.steps.find((s) => s.uses?.startsWith('actions/setup-node'));
+    expect(setup?.with?.['node-version']).toBe('lts/*');
+  });
+
+  it('release.yml versions with Changesets and publishes with provenance using NPM_TOKEN', async () => {
+    const wf = await load('release.yml');
+    expect(wf.on).toEqual({ push: { branches: ['main'] } });
+    expect(wf.permissions).toEqual({
+      contents: 'write',
+      'pull-requests': 'write',
+      'id-token': 'write',
+    });
+    const step = wf.jobs['release']?.steps.find((s) => s.uses?.startsWith('changesets/action@'));
+    expect(step?.with).toMatchObject({
+      'version-script': 'npm run version-packages',
+      'publish-script': 'npm run release',
+    });
+    const env = (step as Step & { env?: Record<string, string> }).env;
+    expect(env).toEqual({
+      NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}',
+      NPM_CONFIG_PROVENANCE: 'true',
+    });
+    const { scripts } = JSON.parse(
       await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
-    ) as { version: string };
-    expect(run(`v${version}`)).toBe(0);
-    expect(run('v9.9.9')).toBe(1);
+    ) as {
+      scripts: Record<string, string>;
+    };
+    expect(scripts['version-packages']).toBe('changeset version');
+    expect(scripts['release']).toBe('npm run build && changeset publish');
   });
 });
