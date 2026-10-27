@@ -10,7 +10,7 @@ import { createBaseContext } from './context.js';
 import { detectProject, type ProjectInfo } from './detect/index.js';
 import { ExitCode, FeHealthError, errorMessage } from './errors.js';
 import { isDirectory } from './fs.js';
-import type { Logger } from './logger.js';
+import { silentLogger, type Logger } from './logger.js';
 import { resolveAuditOptions, type AuditCliFlags, type AuditOptions } from './options.js';
 import { loadPlugins } from './plugins.js';
 import { createProgress } from './progress.js';
@@ -39,10 +39,14 @@ export interface AuditDeps {
   env?: NodeJS.ProcessEnv;
 }
 
+/**
+ * Runs a full audit. Programmatic callers can omit `flags` and `logger` (silent by default);
+ * reports are written according to `flags.format` / the config, and nothing is printed.
+ */
 export async function audit(
   projectPath: string,
-  flags: AuditCliFlags,
-  logger: Logger,
+  flags: AuditCliFlags = {},
+  logger: Logger = silentLogger,
   deps: AuditDeps = {},
 ): Promise<AuditOutcome> {
   const startedAt = new Date();

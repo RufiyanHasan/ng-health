@@ -9,8 +9,8 @@ export {
   type PackageManager,
 } from './core/detect/index.js';
 export { ExitCode, FeHealthError } from './core/errors.js';
-export type { Logger } from './core/logger.js';
-export type { AuditOptions } from './core/options.js';
+export { createLogger, silentLogger, type Logger } from './core/logger.js';
+export type { AuditCliFlags, AuditOptions } from './core/options.js';
 export type { AuditReport, ReportCheck } from './core/report.js';
 export { REPORT_SCHEMA_VERSION } from './core/report.js';
 export { ReportSchema, reportJsonSchema } from './core/report-schema.js';

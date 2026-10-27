@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
-    "test:unit": "vitest run --project unit"
+    "test:unit": "vitest run --project unit",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "angular",
@@ -63,7 +64,10 @@
   },
   "files": [
     "dist",
-    "schema"
+    "schema",
+    "docs",
+    "examples",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22"

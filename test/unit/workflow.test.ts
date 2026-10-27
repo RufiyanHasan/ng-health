@@ -125,3 +125,48 @@ describe('example GitHub Actions workflow', () => {
     expect(empty.warnings).toHaveLength(1);
   });
 });
+
+describe('repository workflows', () => {
+  for (const name of ['ci.yml', 'publish.yml']) {
+    it(`${name} parses and has valid shell steps`, async () => {
+      const wf = parse(
+        await readFile(new URL(`../../.github/workflows/${name}`, import.meta.url), 'utf8'),
+      ) as {
+        jobs: Record<string, { steps: Step[] }>;
+      };
+      const all = Object.values(wf.jobs).flatMap((j) => j.steps);
+      expect(all.some((s) => s.run === 'npm test')).toBe(true);
+      for (const step of all.filter((s) => s.run)) {
+        const shell = step.run!.replace(/\$\{\{[^}]*\}\}/g, 'X');
+        expect(() => execFileSync('bash', ['-n', '-c', shell])).not.toThrow();
+      }
+    });
+  }
+
+  it('publish verifies the release tag against package.json', async () => {
+    const text = await readFile(
+      new URL('../../.github/workflows/publish.yml', import.meta.url),
+      'utf8',
+    );
+    const step = (parse(text) as { jobs: { publish: { steps: Step[] } } }).jobs.publish.steps.find(
+      (s) => s.name === 'Tag matches package.json version',
+    );
+    const run = (tag: string) => {
+      try {
+        execFileSync('bash', ['-c', step!.run!], {
+          env: { ...process.env, TAG: tag },
+          cwd: new URL('../..', import.meta.url).pathname,
+          stdio: 'pipe',
+        });
+        return 0;
+      } catch {
+        return 1;
+      }
+    };
+    const { version } = JSON.parse(
+      await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+    ) as { version: string };
+    expect(run(`v${version}`)).toBe(0);
+    expect(run('v9.9.9')).toBe(1);
+  });
+});
