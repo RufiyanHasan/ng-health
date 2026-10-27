@@ -1,6 +1,6 @@
 {
   "name": "ng-health",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Audit Angular codebases and produce a scored, actionable health report. CLI and library.",
   "keywords": [
     "angular",
