@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { audit } from '../../src/core/audit.js';
+import { auditCommand as audit } from '../../src/cli/commands/audit.js';
 import { silentLogger } from '../../src/core/logger.js';
 import { finding, stubCheck } from '../helpers/checks.js';
 import { fixture } from '../helpers/fixtures.js';

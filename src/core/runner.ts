@@ -32,6 +32,8 @@ export type BaseContext = Omit<CheckContext, 'options' | 'signal' | 'logger'> & 
 };
 
 export interface RunnerOptions {
+  /** Cancels every running and pending check. */
+  signal?: AbortSignal;
   concurrency?: number;
   severityPenalties: Record<Severity, number>;
   onStart?: (check: Check) => void;
@@ -48,21 +50,42 @@ export function deriveScore(
 
 class TimeoutError extends Error {}
 
-async function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms: number): Promise<T> {
+/**
+ * Runs `fn` with a per-check AbortSignal that fires on timeout or when the whole audit is
+ * cancelled (`external`). Either way we stop waiting immediately and the signal tells the
+ * check's work (child processes, loops) to stop.
+ */
+async function withTimeout<T>(
+  fn: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+  external?: AbortSignal,
+): Promise<T> {
   const controller = new AbortController();
   let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort(
-        new TimeoutError(`Timed out after ${ms < 1000 ? `${ms}ms` : `${Math.round(ms / 1000)}s`}`),
-      );
-      reject(controller.signal.reason as Error);
-    }, ms);
+  let onExternalAbort: (() => void) | undefined;
+  const stop = new Promise<never>((_, reject) => {
+    const abort = (reason: Error) => {
+      controller.abort(reason);
+      reject(reason);
+    };
+    timer = setTimeout(
+      () =>
+        abort(
+          new TimeoutError(
+            `Timed out after ${ms < 1000 ? `${ms}ms` : `${Math.round(ms / 1000)}s`}`,
+          ),
+        ),
+      ms,
+    );
+    onExternalAbort = () => abort(new Error('Audit cancelled'));
+    if (external?.aborted) onExternalAbort();
+    else external?.addEventListener('abort', onExternalAbort, { once: true });
   });
   try {
-    return await Promise.race([fn(controller.signal), timeout]);
+    return await Promise.race([fn(controller.signal), stop]);
   } finally {
     clearTimeout(timer);
+    if (onExternalAbort) external?.removeEventListener('abort', onExternalAbort);
   }
 }
 
@@ -100,6 +123,7 @@ export async function runCheck(
           },
         }),
       timeoutMs,
+      opts.signal,
     );
     const parsed = CheckOutputSchema.safeParse(raw);
     if (!parsed.success) {

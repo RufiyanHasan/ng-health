@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildProgram } from '../../src/cli/program.js';
 import { builtinChecks } from '../../src/checks/index.js';
-import { audit } from '../../src/core/audit.js';
+import { audit } from '../../src/index.js';
 import { ConfigSchema } from '../../src/core/config/schema.js';
 import { pathExists } from '../../src/core/fs.js';
 import { silentLogger } from '../../src/core/logger.js';
@@ -83,7 +83,7 @@ describe('README', () => {
       'src/app.ts':
         'export const a = 1; // TODO: remove\n// FIXME later\nconst todo = "TODO in a string";\n',
     });
-    const { report } = await audit(dir, { only: ['custom'], out: path.join(dir, 'out') });
+    const report = await audit(dir, { only: ['custom'] });
     // Built-in checks are reported as skipped ("not selected by --only").
     expect(report.checks.filter((c) => c.status !== 'skipped')).toEqual([
       expect.objectContaining({ id: 'custom/todo-comments', status: 'completed', score: 100 }),

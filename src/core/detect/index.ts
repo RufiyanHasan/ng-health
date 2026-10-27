@@ -1,10 +1,12 @@
 import path from 'node:path';
 import semver from 'semver';
-import { NgHealthError } from '../errors.js';
+import { ProjectError } from '../errors.js';
 import { pathExists, readJsonFile } from '../fs.js';
 
+/** Package manager detected from `packageManager` in package.json or the lockfile. */
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
+/** One project from `angular.json`. */
 export interface AngularProjectInfo {
   name: string;
   type: 'application' | 'library';
@@ -16,6 +18,7 @@ export interface AngularProjectInfo {
   ssr: boolean;
 }
 
+/** The detected project setup: Angular version, package manager, workspace layout, SSR and Nx. */
 export interface ProjectInfo {
   root: string;
   name: string;
@@ -154,7 +157,7 @@ export async function detectProject(root: string): Promise<ProjectInfo> {
 
   const declared = deps['@angular/core'];
   if (!ws && !declared) {
-    throw new NgHealthError(`No Angular project found in ${absRoot}`, {
+    throw new ProjectError(`No Angular project found in ${absRoot}`, {
       hint: 'Expected an angular.json or a package.json depending on @angular/core. Pass the project path: ng-health audit <path>',
     });
   }

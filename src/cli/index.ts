@@ -1,19 +1,25 @@
 #!/usr/bin/env node
-import { runShutdownCleanups } from '../core/shutdown.js';
 import { runCli } from './program.js';
 
-// Ctrl+C or a cancelled CI job: stop Chrome and the local server before exiting.
+// Ctrl+C or a cancelled CI job: cancel the audit so it stops Chrome and the local server,
+// then exit with the conventional code (128 + signal number).
+const controller = new AbortController();
+let signalExitCode: number | undefined;
 for (const [signal, code] of [
   ['SIGINT', 130],
   ['SIGTERM', 143],
 ] as const) {
   process.once(signal, () => {
     process.stderr.write(`\nng-health: received ${signal}, cleaning up…\n`);
-    void runShutdownCleanups().finally(() => process.exit(code));
+    signalExitCode = code;
+    controller.abort(new Error(`Received ${signal}`));
+    // If cleanup hangs, don't hang with it.
+    setTimeout(() => process.exit(code), 10_000).unref();
   });
 }
 
-const code = await runCli(process.argv.slice(2));
+const result = await runCli(process.argv.slice(2), {}, controller.signal);
+const code = signalExitCode ?? result;
 process.exitCode = code;
 // A timed-out check may leave handles open (child processes, browsers). Exit once
 // output has had a moment to flush; unref() means this never delays a clean exit.

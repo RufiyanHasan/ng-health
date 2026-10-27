@@ -10,6 +10,7 @@ import { TOOL_NAME, VERSION } from '../version.js';
 /** Bump the major on breaking changes to the JSON report shape. */
 export const REPORT_SCHEMA_VERSION = '1.0';
 
+/** A check as listed in the report: its result without the findings (those are in `findings`). */
 export interface ReportCheck extends Omit<CheckResult, 'findings'> {
   findingCount: number;
 }

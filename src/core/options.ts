@@ -1,124 +1,103 @@
 import path from 'node:path';
-import type { Config, ReportFormat, RuntimeConfig } from './config/schema.js';
-import { REPORT_FORMATS } from './config/schema.js';
-import { NgHealthError } from './errors.js';
+import type { AuditReport } from './report.js';
+import type { Config, ConfigInput, RuntimeConfig } from './config/schema.js';
+import type { ProjectInfo } from './detect/index.js';
+import { ConfigError } from './errors.js';
+import type { Logger } from './logger.js';
+import type { CheckStatus } from './types.js';
 
-/** Raw CLI flags for `audit`, as parsed by commander. */
-export interface AuditCliFlags {
-  format?: string[];
-  out?: string;
+/** Options for {@link audit}. Every field is optional; the project config fills the gaps. */
+export interface AuditOptions {
+  /**
+   * A config file path (relative to the current directory) or an inline config object.
+   * Default: `ng-health.config.json` in the project root, if present.
+   */
+  config?: string | ConfigInput;
+  /** Run only these check ids or categories, e.g. `['angular', 'bundle/size']`. */
   only?: string[];
+  /** Skip these check ids or categories (added to the config's `skip`). */
   skip?: string[];
-  ci?: boolean;
-  verbose?: boolean;
-  config?: string;
-  /** commander maps --no-build to build: false */
-  build?: boolean;
-  offline?: boolean;
+  /** A previous result (or the path of its JSON report) to compute score deltas against. */
+  baseline?: string | AuditReport;
+  /** Audit a running app with the runtime checks instead of serving the local build. */
   url?: string;
+  /** Routes for Lighthouse and axe. Default: `['/']`. */
   routes?: string[];
+  /** Module that logs in before the runtime checks (path relative to the current directory). */
   loginScript?: string;
-  baseline?: string;
+  /** Set `false` to reuse the existing build output instead of running `ng build`. Default `true`. */
+  build?: boolean;
+  /** Never touch the network (skips registry lookups). Default: the config's `offline`. */
+  offline?: boolean;
+  /** Cancels the audit: running checks stop, Chrome and the local server are shut down. */
+  signal?: AbortSignal;
+  /** Progress notifications, e.g. to drive a spinner. */
+  onProgress?: (event: AuditProgressEvent) => void;
+  /** Receives debug and warning messages. The library is silent without one. */
+  logger?: Logger;
 }
 
-/** Fully-resolved audit options: CLI flags merged over config. */
-export interface AuditOptions {
+/** Progress notifications emitted through `AuditOptions.onProgress`, in this order: `project-detected`, `checks-started`, then one `check-finished` per selected check. */
+export type AuditProgressEvent =
+  | { type: 'project-detected'; project: ProjectInfo }
+  | { type: 'checks-started'; total: number }
+  | { type: 'check-finished'; checkId: string; status: CheckStatus; done: number; total: number };
+
+/** Options after merging over the config. Internal. */
+export interface ResolvedOptions {
   projectPath: string;
-  formats: ReportFormat[];
-  outDir: string;
   only: string[] | undefined;
   skip: string[];
-  ci: boolean;
-  verbose: boolean;
-  configFile: string | undefined;
   build: boolean;
   offline: boolean;
-  /** Runtime settings with CLI overrides applied and loginScript made absolute. */
+  /** Runtime settings with overrides applied and loginScript made absolute. */
   runtime: RuntimeConfig;
-  /** Absolute path of a previous JSON report to compare against. */
-  baseline: string | undefined;
 }
 
-/** Splits repeated and comma-separated values: ["html,json", "md"] → ["html","json","md"]. */
-export function splitList(values: string[] | undefined): string[] {
-  return (values ?? [])
-    .flatMap((v) => v.split(','))
-    .map((v) => v.trim())
-    .filter(Boolean);
-}
-
-export function parseFormats(values: string[]): ReportFormat[] {
-  const formats = splitList(values);
-  const invalid = formats.filter((f) => !(REPORT_FORMATS as readonly string[]).includes(f));
-  if (invalid.length) {
-    throw new NgHealthError(`Unknown report format: ${invalid.join(', ')}`, {
-      hint: `Supported formats: ${REPORT_FORMATS.join(', ')}`,
-    });
-  }
-  return [...new Set(formats)] as ReportFormat[];
-}
-
-export function resolveAuditOptions(
+export function resolveOptions(
   projectPath: string,
-  flags: AuditCliFlags,
+  options: AuditOptions,
   config: Config,
   configFile: string | undefined,
   cwd = process.cwd(),
-): AuditOptions {
-  const ci = Boolean(flags.ci);
-  const cliFormats = parseFormats(flags.format ?? []);
-  let formats = cliFormats.length ? cliFormats : [...config.output.formats];
-  if (ci) {
-    // CI prints the Markdown summary instead of the console table (unless --format console
-    // was asked for explicitly), and always writes the .md file for PR comments.
-    if (!cliFormats.includes('console')) formats = formats.filter((f) => f !== 'console');
-    if (!formats.includes('md')) formats = [...formats, 'md'];
-  }
-
-  const only = splitList(flags.only);
+): ResolvedOptions {
   return {
     projectPath: path.resolve(cwd, projectPath),
-    formats,
-    outDir: path.resolve(cwd, flags.out ?? config.output.dir),
-    only: only.length ? only : config.only,
-    skip: [...new Set([...config.skip, ...splitList(flags.skip)])],
-    ci,
-    verbose: Boolean(flags.verbose),
-    configFile,
-    build: flags.build !== false,
-    offline: Boolean(flags.offline) || config.offline,
-    runtime: resolveRuntime(flags, config, configFile, cwd),
-    baseline: flags.baseline ? path.resolve(cwd, flags.baseline) : undefined,
+    only: options.only?.length ? options.only : config.only,
+    skip: [...new Set([...config.skip, ...(options.skip ?? [])])],
+    build: options.build !== false,
+    offline: Boolean(options.offline) || config.offline,
+    runtime: resolveRuntime(options, config, configFile, cwd),
   };
 }
 
 function resolveRuntime(
-  flags: AuditCliFlags,
+  options: AuditOptions,
   config: Config,
   configFile: string | undefined,
   cwd: string,
 ): RuntimeConfig {
-  const routes = splitList(flags.routes);
+  const routes = options.routes ?? [];
   for (const r of routes) {
-    if (!r.startsWith('/')) throw new NgHealthError(`Routes must start with "/": ${r}`);
+    if (!r.startsWith('/')) throw new ConfigError(`Routes must start with "/": ${r}`);
   }
-  if (flags.url) {
+  if (options.url) {
     try {
-      new URL(flags.url);
+      new URL(options.url);
     } catch {
-      throw new NgHealthError(`Invalid --url: ${flags.url}`);
+      throw new ConfigError(`Invalid url: ${options.url}`);
     }
   }
-  // CLI paths are relative to the working directory, config paths to the config file.
+  // Option paths are relative to the working directory, config paths to the config file.
   const configDir = configFile ? path.dirname(configFile) : cwd;
-  const loginScript = flags.loginScript
-    ? path.resolve(cwd, flags.loginScript)
+  const loginScript = options.loginScript
+    ? path.resolve(cwd, options.loginScript)
     : config.runtime.loginScript
       ? path.resolve(configDir, config.runtime.loginScript)
       : undefined;
   return {
     ...config.runtime,
-    ...(flags.url ? { url: flags.url } : {}),
+    ...(options.url ? { url: options.url } : {}),
     ...(routes.length ? { routes } : {}),
     ...(loginScript ? { loginScript } : {}),
   };

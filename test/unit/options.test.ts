@@ -1,93 +1,120 @@
 import { describe, expect, it } from 'vitest';
+import { parseFormats, resolveOutput, splitList, toAuditOptions } from '../../src/cli/flags.js';
 import { parseConfig } from '../../src/core/config/loader.js';
-import { parseFormats, resolveAuditOptions, splitList } from '../../src/core/options.js';
+import { resolveOptions } from '../../src/core/options.js';
 
-describe('splitList', () => {
-  it('flattens repeated and comma-separated values', () => {
+describe('CLI flags', () => {
+  it('splitList flattens repeated and comma-separated values', () => {
     expect(splitList(['html,json', ' md ', ''])).toEqual(['html', 'json', 'md']);
     expect(splitList(undefined)).toEqual([]);
   });
-});
 
-describe('parseFormats', () => {
-  it('dedupes valid formats', () => {
+  it('parseFormats dedupes and rejects unknown formats', () => {
     expect(parseFormats(['html,json', 'html'])).toEqual(['html', 'json']);
-  });
-  it('rejects unknown formats', () => {
     expect(() => parseFormats(['pdf'])).toThrow(/Unknown report format: pdf/);
   });
-});
 
-describe('resolveAuditOptions', () => {
-  const config = parseConfig({ skip: ['bundle'], output: { dir: 'reports', formats: ['json'] } });
-
-  it('falls back to config values', () => {
-    const o = resolveAuditOptions('app', {}, config, undefined, '/work');
-    expect(o).toMatchObject({
-      projectPath: '/work/app',
-      formats: ['json'],
-      outDir: '/work/reports',
-      only: undefined,
-      skip: ['bundle'],
-      ci: false,
-    });
-  });
-
-  it('lets CLI flags win and merges skip lists', () => {
-    const o = resolveAuditOptions(
-      '.',
-      { format: ['html,md'], out: 'out', only: ['angular'], skip: ['hygiene'], verbose: true },
-      config,
-      '/work/ng-health.config.json',
-      '/work',
-    );
-    expect(o).toMatchObject({
-      formats: ['html', 'md'],
-      outDir: '/work/out',
+  it('toAuditOptions maps flags onto library options, omitting unset ones', () => {
+    expect(toAuditOptions({})).toEqual({});
+    expect(
+      toAuditOptions({
+        only: ['angular'],
+        skip: ['bundle,hygiene'],
+        routes: ['/,/cart'],
+        url: 'https://x.test',
+        loginScript: 'login.mjs',
+        baseline: 'old.json',
+        config: 'c.json',
+        build: false,
+        offline: true,
+        format: ['html'],
+        ci: true,
+      }),
+    ).toEqual({
       only: ['angular'],
       skip: ['bundle', 'hygiene'],
-      verbose: true,
-      configFile: '/work/ng-health.config.json',
+      routes: ['/', '/cart'],
+      url: 'https://x.test',
+      loginScript: 'login.mjs',
+      baseline: 'old.json',
+      config: 'c.json',
+      build: false,
+      offline: true,
     });
   });
 
-  it('always adds the markdown summary in CI mode', () => {
-    expect(resolveAuditOptions('.', { ci: true }, config, undefined, '/w').formats).toEqual([
-      'json',
-      'md',
-    ]);
+  it('resolveOutput: flags win over config output; CI swaps console for markdown', () => {
+    const config = parseConfig({ output: { dir: 'reports', formats: ['json', 'console'] } });
+    expect(resolveOutput({}, config, '/work')).toEqual({
+      formats: ['json', 'console'],
+      outDir: '/work/reports',
+    });
+    expect(resolveOutput({ format: ['html,md'], out: 'out' }, config, '/work')).toEqual({
+      formats: ['html', 'md'],
+      outDir: '/work/out',
+    });
+    expect(resolveOutput({ ci: true }, config, '/w').formats).toEqual(['json', 'md']);
+  });
+});
+
+describe('resolveOptions (library)', () => {
+  const config = parseConfig({
+    skip: ['bundle'],
+    runtime: { routes: ['/a'], loginScript: 'scripts/login.mjs' },
   });
 
-  it('resolves runtime flags: url, routes and login script paths', () => {
-    const cfg = parseConfig({ runtime: { routes: ['/a'], loginScript: 'scripts/login.mjs' } });
-    const fromConfig = resolveAuditOptions('.', {}, cfg, '/proj/ng-health.config.json', '/work');
-    expect(fromConfig.runtime).toMatchObject({
-      routes: ['/a'],
-      loginScript: '/proj/scripts/login.mjs',
-      formFactor: 'mobile',
+  it('falls back to config values', () => {
+    expect(resolveOptions('app', {}, config, undefined, '/work')).toMatchObject({
+      projectPath: '/work/app',
+      only: undefined,
+      skip: ['bundle'],
+      build: true,
+      offline: false,
+      runtime: { routes: ['/a'], loginScript: '/work/scripts/login.mjs', formFactor: 'mobile' },
     });
+  });
 
-    const fromCli = resolveAuditOptions(
+  it('lets options win, merges skip, and resolves paths', () => {
+    const o = resolveOptions(
       '.',
       {
+        only: ['angular'],
+        skip: ['hygiene'],
+        build: false,
+        offline: true,
         url: 'https://staging.example.com',
-        routes: ['/,/products', '/cart'],
+        routes: ['/', '/cart'],
         loginScript: 'login.mjs',
       },
-      cfg,
+      config,
       '/proj/ng-health.config.json',
       '/work',
     );
-    expect(fromCli.runtime).toMatchObject({
-      url: 'https://staging.example.com',
-      routes: ['/', '/products', '/cart'],
-      loginScript: '/work/login.mjs',
+    expect(o).toMatchObject({
+      only: ['angular'],
+      skip: ['bundle', 'hygiene'],
+      build: false,
+      offline: true,
+      runtime: {
+        url: 'https://staging.example.com',
+        routes: ['/', '/cart'],
+        loginScript: '/work/login.mjs',
+      },
     });
-    expect(() => resolveAuditOptions('.', { routes: ['products'] }, cfg, undefined, '/w')).toThrow(
-      /must start with "\/"/,
+    expect(
+      resolveOptions('.', {}, config, '/proj/ng-health.config.json', '/work').runtime.loginScript,
+    ).toBe('/proj/scripts/login.mjs');
+  });
+
+  it('rejects invalid routes and urls with ConfigError', () => {
+    expect(() => resolveOptions('.', { routes: ['products'] }, config, undefined, '/w')).toThrow(
+      expect.objectContaining({
+        name: 'ConfigError',
+        message: 'Routes must start with "/": products',
+      }),
     );
-    expect(() => resolveAuditOptions('.', { url: 'not a url' }, cfg, undefined, '/w')).toThrow(
-      /Invalid --url/,
+    expect(() => resolveOptions('.', { url: 'not a url' }, config, undefined, '/w')).toThrow(
+      /Invalid url/,
     );
   });
 });

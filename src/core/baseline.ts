@@ -1,9 +1,10 @@
 import path from 'node:path';
-import { NgHealthError } from './errors.js';
+import { ConfigError } from './errors.js';
 import { readJsonFile } from './fs.js';
 import type { AuditReport } from './report.js';
 import type { ReportedFinding } from './types.js';
 
+/** Comparison with a baseline result: score deltas and new/resolved findings (matched by fingerprint). */
 export interface Trend {
   baselineGeneratedAt: string;
   baselineVersion: string;
@@ -25,9 +26,9 @@ const delta = (before: number | undefined, after: number | undefined) =>
 export async function loadBaseline(file: string): Promise<AuditReport> {
   const abs = path.resolve(file);
   const raw = await readJsonFile<Partial<AuditReport>>(abs);
-  if (!raw) throw new NgHealthError(`Baseline report not found: ${abs}`);
+  if (!raw) throw new ConfigError(`Baseline report not found: ${abs}`);
   if (typeof raw.schemaVersion !== 'string' || !raw.schemaVersion.startsWith('1.')) {
-    throw new NgHealthError(
+    throw new ConfigError(
       `Unsupported baseline schema version "${String(raw.schemaVersion)}" in ${abs}`,
       {
         hint: 'Pass a JSON report produced by ng-health 1.x (--format json).',
@@ -35,7 +36,7 @@ export async function loadBaseline(file: string): Promise<AuditReport> {
     );
   }
   if (!Array.isArray(raw.findings) || !Array.isArray(raw.categories) || !raw.score) {
-    throw new NgHealthError(`${abs} is not a ng-health JSON report`);
+    throw new ConfigError(`${abs} is not a ng-health JSON report`);
   }
   return raw as AuditReport;
 }

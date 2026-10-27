@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { describe, expect, it } from 'vitest';
-import { audit } from '../../src/core/audit.js';
+import { auditCommand as audit } from '../../src/cli/commands/audit.js';
 import { silentLogger } from '../../src/core/logger.js';
 import { ReportSchema, reportJsonSchema } from '../../src/core/report-schema.js';
 import { renderJson } from '../../src/reporters/json.js';

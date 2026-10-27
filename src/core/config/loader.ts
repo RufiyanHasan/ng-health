@@ -1,8 +1,8 @@
 import path from 'node:path';
 import type { z } from 'zod';
-import { NgHealthError } from '../errors.js';
+import { ConfigError } from '../errors.js';
 import { readJsonFile } from '../fs.js';
-import { CONFIG_FILE_NAME, ConfigSchema, type Config } from './schema.js';
+import { CONFIG_FILE_NAME, ConfigSchema, type Config, type ConfigInput } from './schema.js';
 
 export interface LoadedConfig {
   config: Config;
@@ -22,7 +22,7 @@ export function formatZodIssues(error: z.ZodError): string {
 export function parseConfig(raw: unknown, source = 'config'): Config {
   const result = ConfigSchema.safeParse(raw ?? {});
   if (!result.success) {
-    throw new NgHealthError(`Invalid ${source}:\n${formatZodIssues(result.error)}`, {
+    throw new ConfigError(`Invalid ${source}:\n${formatZodIssues(result.error)}`, {
       hint: `See the config reference in the ng-health README, or regenerate it with "ng-health init --force".`,
     });
   }
@@ -30,17 +30,20 @@ export function parseConfig(raw: unknown, source = 'config'): Config {
 }
 
 /**
- * Loads the config from an explicit path, or from ng-health.config.json in the project root.
- * A missing default config is fine (defaults apply); a missing explicit config is an error.
+ * Loads the config: an inline object, an explicit file path, or `ng-health.config.json` in the
+ * project root. A missing default config is fine (defaults apply); a missing explicit one is not.
  */
 export async function loadConfig(
   projectRoot: string,
-  explicitPath?: string,
+  source?: string | ConfigInput,
 ): Promise<LoadedConfig> {
-  const file = explicitPath ? path.resolve(explicitPath) : path.join(projectRoot, CONFIG_FILE_NAME);
+  if (source !== undefined && typeof source !== 'string') {
+    return { config: parseConfig(source, 'inline config'), file: undefined };
+  }
+  const file = source ? path.resolve(source) : path.join(projectRoot, CONFIG_FILE_NAME);
   const raw = await readJsonFile(file);
   if (raw === undefined) {
-    if (explicitPath) throw new NgHealthError(`Config file not found: ${file}`);
+    if (source) throw new ConfigError(`Config file not found: ${file}`);
     return { config: parseConfig({}), file: undefined };
   }
   return { config: parseConfig(raw, path.basename(file)), file };

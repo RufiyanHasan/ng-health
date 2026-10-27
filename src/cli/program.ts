@@ -1,12 +1,12 @@
 import { Command, CommanderError, Option } from 'commander';
 import pc from 'picocolors';
-import { audit } from '../core/audit.js';
 import { REPORT_FORMATS } from '../core/config/schema.js';
 import { ExitCode, NgHealthError } from '../core/errors.js';
 import { createLogger, type Logger, type LoggerOptions } from '../core/logger.js';
-import type { AuditCliFlags } from '../core/options.js';
 import { VERSION } from '../version.js';
+import { auditCommand } from './commands/audit.js';
 import { initCommand } from './commands/init.js';
+import type { AuditCliFlags } from './flags.js';
 
 export { VERSION } from '../version.js';
 
@@ -16,6 +16,7 @@ export function buildProgram(
   logger: Logger,
   setExitCode: (code: number) => void,
   io: Pick<LoggerOptions, 'stdout' | 'stderr'> = {},
+  signal?: AbortSignal,
 ): Command {
   const program = new Command()
     .name('ng-health')
@@ -55,7 +56,7 @@ export function buildProgram(
     .option('--offline', 'never touch the network (skips registry lookups)')
     .option('--verbose', 'verbose diagnostic output')
     .action(async (projectPath: string, flags: AuditCliFlags) => {
-      const outcome = await audit(projectPath, flags, logger);
+      const outcome = await auditCommand(projectPath, flags, logger, signal ? { signal } : {});
       setExitCode(outcome.exitCode);
     });
 
@@ -72,16 +73,24 @@ export function buildProgram(
   return program;
 }
 
-/** Runs the CLI and returns the process exit code. Never throws. */
-export async function runCli(argv: string[], loggerOptions: LoggerOptions = {}): Promise<number> {
+/**
+ * Runs the CLI and returns the process exit code. Never throws and never exits the process;
+ * `signal` cancels a running audit (the entry point wires it to SIGINT/SIGTERM).
+ */
+export async function runCli(
+  argv: string[],
+  loggerOptions: LoggerOptions = {},
+  signal?: AbortSignal,
+): Promise<number> {
   const verbose = argv.includes('--verbose');
   const logger = createLogger({ ...loggerOptions, verbose });
   let exitCode: number = ExitCode.Pass;
-  const program = buildProgram(logger, (code) => (exitCode = code), loggerOptions);
+  const program = buildProgram(logger, (code) => (exitCode = code), loggerOptions, signal);
   try {
     await program.parseAsync(argv, { from: 'user' });
     return exitCode;
   } catch (err) {
+    if (signal?.aborted) return ExitCode.ToolError; // the entry point maps this to 130/143
     if (err instanceof CommanderError) {
       // --help / --version exit 0; usage errors are tool errors.
       return err.exitCode === 0 ? ExitCode.Pass : ExitCode.ToolError;

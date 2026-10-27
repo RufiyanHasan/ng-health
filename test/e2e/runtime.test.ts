@@ -3,7 +3,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
-import { audit } from '../../src/core/audit.js';
+import { auditCommand as audit } from '../../src/cli/commands/audit.js';
 import { silentLogger } from '../../src/core/logger.js';
 import { findChrome } from '../../src/runtime/chrome.js';
 import { fixture } from '../helpers/fixtures.js';

@@ -2,6 +2,7 @@ import { SEVERITIES, type Thresholds } from './config/schema.js';
 import type { ScoreSummary } from './scoring.js';
 import type { CheckResult, ReportedFinding } from './types.js';
 
+/** Outcome of one configured threshold (quality-gate rule). */
 export interface ThresholdResult {
   id: string;
   description: string;

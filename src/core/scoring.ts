@@ -4,6 +4,7 @@ import type { CheckResult } from './types.js';
 /** Weight for plugin categories that have no configured or default weight. */
 export const FALLBACK_CATEGORY_WEIGHT = 10;
 
+/** Score of one category: the weighted mean of its completed checks. */
 export interface CategoryScore {
   id: string;
   /** undefined when every check in the category was skipped or errored. */
@@ -18,6 +19,7 @@ export interface ScoreSummary {
   categories: CategoryScore[];
 }
 
+/** Letter grade for a score: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, otherwise F. */
 export type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
 
 export function grade(score: number): Grade {

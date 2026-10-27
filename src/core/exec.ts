@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 
+/** Options for `ctx.exec`. */
 export interface ExecOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
@@ -8,6 +9,7 @@ export interface ExecOptions {
   maxBuffer?: number;
 }
 
+/** Result of `ctx.exec`: captured output and the exit code (non-zero codes are returned, not thrown). */
 export interface ExecResult {
   stdout: string;
   stderr: string;
@@ -15,6 +17,7 @@ export interface ExecResult {
   exitCode: number;
 }
 
+/** Runs a command without a shell; available to checks as `ctx.exec`. */
 export type ExecFn = (command: string, args: string[], opts?: ExecOptions) => Promise<ExecResult>;
 
 /**

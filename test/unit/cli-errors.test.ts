@@ -2,14 +2,14 @@ import { Writable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/core/audit.js', () => ({
-  audit: vi.fn(async () => {
+  runAudit: vi.fn(async () => {
     throw new TypeError('cannot read properties of undefined');
   }),
 }));
 
 const { runCli } = await import('../../src/cli/program.js');
 const { NgHealthError } = await import('../../src/core/errors.js');
-const { audit } = await import('../../src/core/audit.js');
+const { runAudit } = await import('../../src/core/audit.js');
 
 function capture() {
   let text = '';
@@ -39,7 +39,7 @@ describe('CLI error handling', () => {
   });
 
   it('prints the cause of tool errors in verbose mode', async () => {
-    vi.mocked(audit).mockRejectedValueOnce(
+    vi.mocked(runAudit).mockRejectedValueOnce(
       new NgHealthError('Config broken', { cause: new Error('root cause') }),
     );
     const err = capture();

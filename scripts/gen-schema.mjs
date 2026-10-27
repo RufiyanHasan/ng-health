@@ -2,7 +2,7 @@
 // and verifies the CLI entry is still executable with its shebang.
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 
-const { configJsonSchema, reportJsonSchema } = await import('../dist/index.js');
+const { configJsonSchema, reportJsonSchema } = await import('../dist/internal/schemas.js');
 const schemas = {
   'config.schema.json': { title: 'ng-health configuration', ...configJsonSchema() },
   'report.v1.json': { title: 'ng-health report (v1)', ...reportJsonSchema() },

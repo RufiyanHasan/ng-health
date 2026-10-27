@@ -5,7 +5,11 @@ import pkg from './package.json' with { type: 'json' };
 const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.optionalDependencies)];
 
 export default defineConfig({
-  entry: { index: 'src/index.ts', 'cli/index': 'src/cli/index.ts' },
+  entry: {
+    index: 'src/index.ts',
+    'cli/index': 'src/cli/index.ts',
+    'internal/schemas': 'src/schemas.ts',
+  },
   format: ['esm'],
   target: 'node24',
   platform: 'node',

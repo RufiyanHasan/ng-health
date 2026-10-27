@@ -2,9 +2,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { githubAnnotations, MAX_ANNOTATIONS } from '../../src/ci/github.js';
-import { audit } from '../../src/core/audit.js';
+import { auditCommand as audit } from '../../src/cli/commands/audit.js';
 import { parseConfig } from '../../src/core/config/loader.js';
-import { resolveAuditOptions } from '../../src/core/options.js';
+import { resolveOutput } from '../../src/cli/flags.js';
 import { MARKDOWN_MARKER } from '../../src/reporters/markdown.js';
 import { fixture } from '../helpers/fixtures.js';
 import { reported, sampleReport } from '../helpers/report.js';
@@ -52,14 +52,12 @@ describe('githubAnnotations', () => {
 describe('CI mode', () => {
   it('prints Markdown instead of the console table unless console is requested', () => {
     const config = parseConfig({});
-    expect(resolveAuditOptions('.', { ci: true }, config, undefined, '/w').formats).toEqual([
-      'html',
+    expect(resolveOutput({ ci: true }, config, '/w').formats).toEqual(['html', 'md']);
+    expect(resolveOutput({ ci: true, format: ['console,json'] }, config, '/w').formats).toEqual([
+      'console',
+      'json',
       'md',
     ]);
-    expect(
-      resolveAuditOptions('.', { ci: true, format: ['console,json'] }, config, undefined, '/w')
-        .formats,
-    ).toEqual(['console', 'json', 'md']);
   });
 
   it('writes Markdown to stdout, annotations and the GitHub job summary', async () => {

@@ -1,5 +1,5 @@
 import type { CheckSettings, Config } from './config/schema.js';
-import { NgHealthError } from './errors.js';
+import { CheckError } from './errors.js';
 import type { Check } from './types.js';
 
 export interface SelectedCheck {
@@ -20,11 +20,11 @@ export function validateRegistry(checks: Check[]): void {
   const seen = new Set<string>();
   for (const check of checks) {
     if (!ID_PATTERN.test(check.id)) {
-      throw new NgHealthError(`Invalid check id "${check.id}"`, {
+      throw new CheckError(`Invalid check id "${check.id}"`, {
         hint: 'Check ids are lowercase kebab-case, optionally namespaced: "category/name".',
       });
     }
-    if (seen.has(check.id)) throw new NgHealthError(`Duplicate check id "${check.id}"`);
+    if (seen.has(check.id)) throw new CheckError(`Duplicate check id "${check.id}"`);
     seen.add(check.id);
   }
 }

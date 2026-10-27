@@ -2,6 +2,7 @@ import { SEVERITIES, type Config, type Severity } from './config/schema.js';
 import { categoryWeight } from './scoring.js';
 import type { ReportedFinding } from './types.js';
 
+/** One entry of the ranked "Top fixes" list: a group of findings with the same check, rule and remedy. */
 export interface TopFix {
   rank: number;
   checkId: string;

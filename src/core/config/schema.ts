@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const SEVERITIES = ['critical', 'high', 'medium', 'low'] as const;
 export const SeveritySchema = z.enum(SEVERITIES);
+/** Finding severity, from most to least urgent: `critical`, `high`, `medium`, `low`. */
 export type Severity = z.infer<typeof SeveritySchema>;
 
 export const REPORT_FORMATS = ['console', 'html', 'json', 'md'] as const;
@@ -31,6 +32,7 @@ const ThresholdsSchema = z.strictObject({
   /** Fail if any finding at or above this severity exists. */
   failOnSeverity: SeveritySchema.optional(),
 });
+/** Quality-gate thresholds; any failure makes `result.passed` false (CLI exit code 1). */
 export type Thresholds = z.infer<typeof ThresholdsSchema>;
 
 export const DEFAULT_CATEGORY_WEIGHTS: Record<string, number> = {
@@ -72,6 +74,7 @@ const RuntimeSchema = z.strictObject({
   /** axe-core rule tags to run. */
   axeTags: z.array(z.string()).min(1).default(DEFAULT_AXE_TAGS),
 });
+/** Settings for the browser-based checks (Lighthouse, axe): target URL, routes, login script, Chrome path. */
 export type RuntimeConfig = z.output<typeof RuntimeSchema>;
 
 export const ConfigSchema = z.strictObject({
@@ -103,6 +106,7 @@ export const ConfigSchema = z.strictObject({
 });
 
 export type ConfigInput = z.input<typeof ConfigSchema>;
+/** The config after validation and defaults (what checks see as `ctx.config`). Exported publicly as `ResolvedConfig`. */
 export type Config = z.output<typeof ConfigSchema>;
 
 export function configJsonSchema(): Record<string, unknown> {

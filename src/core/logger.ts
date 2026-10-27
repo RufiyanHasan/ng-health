@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 
+/** Receives diagnostics. Pass one in `AuditOptions.logger` to see debug output; the library is silent otherwise. */
 export interface Logger {
   info(msg: string): void;
   success(msg: string): void;

@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { audit } from '../../src/core/audit.js';
+import { auditCommand as audit } from '../../src/cli/commands/audit.js';
 import { computeTrend, loadBaseline } from '../../src/core/baseline.js';
 import { silentLogger } from '../../src/core/logger.js';
 import { runCli } from '../../src/cli/program.js';

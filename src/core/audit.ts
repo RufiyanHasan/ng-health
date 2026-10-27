@@ -1,21 +1,16 @@
 import path from 'node:path';
-import pc from 'picocolors';
 import { builtinChecks } from '../checks/index.js';
-import { githubAnnotations, writeStepSummary } from '../ci/github.js';
-import { renderMarkdown, writeReports } from '../reporters/index.js';
 import { computeTrend, loadBaseline } from './baseline.js';
 import { loadConfig } from './config/loader.js';
-import { DEFAULT_SEVERITY_PENALTIES } from './config/schema.js';
+import { DEFAULT_SEVERITY_PENALTIES, type Config } from './config/schema.js';
 import { createBaseContext } from './context.js';
 import { detectProject, type ProjectInfo } from './detect/index.js';
-import { ExitCode, NgHealthError, errorMessage } from './errors.js';
+import { ProjectError } from './errors.js';
 import { isDirectory } from './fs.js';
-import { silentLogger, type Logger } from './logger.js';
-import { resolveAuditOptions, type AuditCliFlags, type AuditOptions } from './options.js';
+import { silentLogger } from './logger.js';
+import { resolveOptions, type AuditOptions, type ResolvedOptions } from './options.js';
 import { loadPlugins } from './plugins.js';
-import { createProgress } from './progress.js';
 import { selectChecks, validateRegistry } from './registry.js';
-import { onShutdown } from './shutdown.js';
 import { buildReport, type AuditReport } from './report.js';
 import { runChecks, type BaseContext } from './runner.js';
 import { computeScores } from './scoring.js';
@@ -23,92 +18,93 @@ import { evaluateThresholds } from './thresholds.js';
 import { topFixes } from './top-fixes.js';
 import type { Check, CheckResult } from './types.js';
 
-export interface AuditOutcome {
-  exitCode: ExitCode;
-  options: AuditOptions;
-  project: ProjectInfo;
+/** Everything an audit produced; the public API returns only `report`. */
+export interface AuditRun {
   report: AuditReport;
+  project: ProjectInfo;
+  config: Config;
+  configFile: string | undefined;
+  options: ResolvedOptions;
 }
 
+/** Test and embedding hooks. Not part of the public API. */
 export interface AuditDeps {
-  /** Override the built-in checks (tests, embedding). */
+  /** Override the built-in checks. */
   checks?: Check[];
   /** Override context pieces (tests inject exec/now). */
   context?: Partial<BaseContext>;
-  /** Environment for CI integration (defaults to process.env). */
-  env?: NodeJS.ProcessEnv;
 }
 
 /**
- * Runs a full audit. Programmatic callers can omit `flags` and `logger` (silent by default);
- * reports are written according to `flags.format` / the config, and nothing is printed.
+ * Runs an audit and returns the result. Pure in the sense the CLI relies on: no console output,
+ * no report files, no process.exit. Throws NgHealthError subclasses for invalid input.
  */
-export async function audit(
+export async function runAudit(
   projectPath: string,
-  flags: AuditCliFlags = {},
-  logger: Logger = silentLogger,
+  options: AuditOptions = {},
   deps: AuditDeps = {},
-): Promise<AuditOutcome> {
+): Promise<AuditRun> {
   const startedAt = new Date();
+  const logger = options.logger ?? silentLogger;
+  const signal = options.signal;
+  signal?.throwIfAborted();
+
   const absPath = path.resolve(projectPath);
   if (!(await isDirectory(absPath))) {
-    throw new NgHealthError(`Project path does not exist or is not a directory: ${absPath}`);
+    throw new ProjectError(`Project path does not exist or is not a directory: ${absPath}`);
   }
-  const { config, file } = await loadConfig(absPath, flags.config);
-  const options = resolveAuditOptions(projectPath, flags, config, file);
+  const { config, file } = await loadConfig(absPath, options.config);
+  const resolved = resolveOptions(projectPath, options, config, file);
   logger.debug(file ? `Using config ${file}` : 'No config file found, using defaults');
-  logger.debug(`Options: ${JSON.stringify(options)}`);
+  logger.debug(`Options: ${JSON.stringify(resolved)}`);
   // Fail fast on a bad baseline, before spending minutes on checks.
-  const baseline = options.baseline ? await loadBaseline(options.baseline) : undefined;
+  const baseline =
+    typeof options.baseline === 'string' ? await loadBaseline(options.baseline) : options.baseline;
 
-  const progress = createProgress(!options.ci && !options.verbose);
-  progress.start('Detecting project setup…');
-  let project: ProjectInfo;
-  try {
-    project = await detectProject(absPath);
-  } catch (err) {
-    progress.fail('Project detection failed');
-    throw err;
-  }
-  progress.succeed(`Detected ${describeProject(project)}`);
-  if (!progress.active) logger.info(`Detected ${describeProject(project)}`);
+  const project = await detectProject(absPath);
+  options.onProgress?.({ type: 'project-detected', project });
 
   const plugins = await loadPlugins(config.plugins, file ? path.dirname(file) : absPath, absPath);
   const allChecks = [...(deps.checks ?? builtinChecks), ...plugins];
   validateRegistry(allChecks);
-  const selection = selectChecks(allChecks, config, options);
+  const selection = selectChecks(allChecks, config, resolved);
   for (const token of selection.unknownTokens) {
     logger.warn(`"${token}" does not match any check id or category`);
   }
 
   const total = selection.selected.length;
   const penalties = { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties };
-  progress.start(`Running ${total} checks…`);
+  options.onProgress?.({ type: 'checks-started', total });
   const context = createBaseContext(project, config, logger, {
-    build: options.build,
-    offline: options.offline,
-    runtime: options.runtime,
+    build: resolved.build,
+    offline: resolved.offline,
+    runtime: resolved.runtime,
     ...deps.context,
   });
   let ran: CheckResult[];
-  // If interrupted, still stop the local server and Chrome instead of orphaning them.
-  const offShutdown = onShutdown(() => context.dispose());
   try {
     ran = await runChecks(selection.selected, context, {
       severityPenalties: penalties,
+      ...(signal ? { signal } : {}),
       onStart: (check) => logger.debug(`Starting ${check.id}`),
       onDone: (r, done) => {
-        progress.update(`Running checks (${done}/${total}) — finished ${r.id}`);
+        options.onProgress?.({
+          type: 'check-finished',
+          checkId: r.id,
+          status: r.status,
+          done,
+          total,
+        });
         logger.debug(
           `Finished ${r.id}: ${r.status}${r.reason ? ` (${r.reason})` : ''} in ${r.durationMs}ms`,
         );
       },
     });
   } finally {
-    offShutdown();
+    // Always stop the local server and Chrome, including when the audit was cancelled.
     await context.dispose();
   }
-  progress.stop();
+  signal?.throwIfAborted();
 
   // Report every registered check, in registry order, including excluded ones.
   const ranById = new Map(ran.map((r) => [r.id, r]));
@@ -140,56 +136,5 @@ export async function audit(
   const report = buildReport({ project, results, scores, thresholds, topFixes: fixes, startedAt });
   if (baseline) report.trend = computeTrend(baseline, report);
 
-  const written = await writeReports(report, options.formats, options.outDir, logger);
-  for (const file of written) {
-    const rel = path.relative(process.cwd(), file);
-    logger.info(`Report written: ${rel.startsWith('..') ? file : rel}`);
-  }
-
-  if (options.ci) await ciOutput(report, project.root, logger, deps.env ?? process.env);
-  const failed = report.thresholds.filter((t) => !t.passed);
-  if (failed.length) {
-    logger.error(
-      `Quality gate failed: ${failed.map((t) => `${t.description} ${t.actual ?? 'n/a'} (expected ${t.expected})`).join('; ')}`,
-    );
-  } else if (report.thresholds.length) {
-    logger.success('Quality gate passed');
-  }
-
-  return {
-    exitCode: report.passed ? ExitCode.Pass : ExitCode.ThresholdFailed,
-    options,
-    project,
-    report,
-  };
-}
-
-export function describeProject(p: ProjectInfo): string {
-  const parts = [
-    pc.bold(p.name),
-    p.angular.major !== undefined
-      ? `Angular ${p.angular.installed ?? p.angular.declared}`
-      : 'Angular (version unknown)',
-    p.packageManager,
-    p.kind === 'workspace' ? `workspace (${p.projects.length} projects)` : 'single app',
-  ];
-  if (p.ssr) parts.push('SSR');
-  if (p.nx) parts.push('Nx');
-  return parts.join(' · ');
-}
-
-/** CI mode: Markdown summary on stdout; on GitHub Actions also annotations and the job summary. */
-async function ciOutput(report: AuditReport, root: string, logger: Logger, env: NodeJS.ProcessEnv) {
-  const markdown = renderMarkdown(report);
-  logger.out(markdown);
-  if (env['GITHUB_ACTIONS'] !== 'true') return;
-  for (const line of githubAnnotations(report, root, env['GITHUB_WORKSPACE'] ?? process.cwd()))
-    logger.out(line);
-  if (env['GITHUB_STEP_SUMMARY']) {
-    try {
-      await writeStepSummary(env['GITHUB_STEP_SUMMARY'], markdown);
-    } catch (err) {
-      logger.warn(`Could not write the GitHub job summary: ${errorMessage(err)}`);
-    }
-  }
+  return { report, project, config, configFile: file, options: resolved };
 }

@@ -15,6 +15,7 @@ export type CheckCategory =
   | 'accessibility'
   | (string & {});
 
+/** One problem found by a check, with what to do about it. */
 export interface Finding {
   severity: Severity;
   message: string;
@@ -29,6 +30,7 @@ export interface Finding {
   ruleId?: string;
 }
 
+/** What `Check.run()` returns. Validated by the runner; invalid output marks the check as errored. */
 export interface CheckOutput {
   /** 0–100. If omitted, the score is derived from finding severities. */
   score?: number;
@@ -37,6 +39,7 @@ export interface CheckOutput {
   meta?: Record<string, unknown>;
 }
 
+/** Everything a check may use, injected by the runner. Prefer these over direct `fs`/`child_process` access: they honour ignore globs, timeouts and `--offline`. */
 export interface CheckContext {
   /** Absolute project root. */
   root: string;
@@ -66,6 +69,7 @@ export interface CheckContext {
   shared<T>(key: string, factory: () => Promise<T>): Promise<T>;
 }
 
+/** A health check. Built-in checks and plugins implement this; register plugins via the config's `plugins`. See {@link defineCheck}. */
 export interface Check {
   /** Unique, kebab-case, namespaced by category: "angular/onpush". */
   id: string;
@@ -83,8 +87,10 @@ export interface Check {
   run(ctx: CheckContext): Promise<CheckOutput> | CheckOutput;
 }
 
+/** `completed` (scored), `errored` (threw, timed out or returned invalid output) or `skipped` (not selected, or nothing to assess). */
 export type CheckStatus = 'completed' | 'errored' | 'skipped';
 
+/** A {@link Finding} as it appears in a report: annotated with its check, category and a stable fingerprint. */
 export interface ReportedFinding extends Finding {
   checkId: string;
   category: string;
@@ -92,6 +98,7 @@ export interface ReportedFinding extends Finding {
   fingerprint: string;
 }
 
+/** The outcome of one check after it ran (or was skipped), as stored in the report. */
 export interface CheckResult {
   id: string;
   name: string;
@@ -120,6 +127,7 @@ export class CheckSkipped extends Error {
   }
 }
 
+/** Marks the running check as skipped (e.g. "no coverage report found"). Call it from `run()`; it never returns. */
 export function skipCheck(reason: string): never {
   throw new CheckSkipped(reason);
 }

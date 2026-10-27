@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { NgHealthError, errorMessage } from './errors.js';
+import { CheckError, errorMessage } from './errors.js';
 import type { Check } from './types.js';
 
 function isCheck(value: unknown): value is Check {
@@ -20,7 +20,7 @@ export function checksFromModule(mod: Record<string, unknown>, spec: string): Ch
   const exported = mod['default'] ?? mod['checks'];
   const list = Array.isArray(exported) ? exported : [exported];
   if (!list.length || !list.every(isCheck)) {
-    throw new NgHealthError(`Plugin "${spec}" does not export a valid check`, {
+    throw new CheckError(`Plugin "${spec}" does not export a valid check`, {
       hint: 'Export a check (or an array of checks) as the default export. Each needs id, name, category and run(). See "Writing a custom check" in the README.',
     });
   }
@@ -54,7 +54,7 @@ export async function loadPlugins(
     try {
       mod = (await import(url)) as Record<string, unknown>;
     } catch (err) {
-      throw new NgHealthError(`Could not load plugin "${spec}": ${errorMessage(err)}`, {
+      throw new CheckError(`Could not load plugin "${spec}": ${errorMessage(err)}`, {
         cause: err,
       });
     }
