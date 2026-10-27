@@ -5,7 +5,9 @@
 #   - that PR merged (no pending changesets, unpublished version) → publishes to npm with
 #     provenance, tags the release and creates a GitHub release
 #
-# Setup: add an npm automation token as the NPM_TOKEN repository secret. Nothing else.
+# Auth: npm Trusted Publishing (OIDC). No npm token is stored anywhere; npmjs.com trusts this
+# workflow file of this repository (package settings → Trusted Publisher → GitHub Actions,
+# workflow "release.yml"). Requires npm >= 11.5.1, installed below.
 
 name: Release
 
@@ -20,7 +22,7 @@ concurrency:
 permissions:
   contents: write # version commit, git tags, GitHub releases
   pull-requests: write # the version PR
-  id-token: write # npm provenance (OIDC)
+  id-token: write # Trusted Publishing + provenance (OIDC)
 
 jobs:
   release:
@@ -36,6 +38,9 @@ jobs:
           node-version: lts/*
           cache: npm
           registry-url: https://registry.npmjs.org
+
+      - name: npm with Trusted Publishing support
+        run: npm install -g npm@^11.5.1
 
       - run: npm ci
       - run: npm run lint
@@ -55,5 +60,4 @@ jobs:
           create-github-releases: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'

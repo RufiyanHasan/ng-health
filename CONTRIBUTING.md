@@ -121,6 +121,9 @@ Releases are automated by `.github/workflows/release.yml` (Changesets):
    (`changeset publish`, which runs `npm publish --provenance` for versions not on npm yet).
    It also tags `vX.Y.Z` and creates a GitHub release.
 
-The only setup is an npm automation token stored as the `NPM_TOKEN` repository secret.
+Publishing uses npm **Trusted Publishing** (OIDC), so no npm token is stored anywhere. It's
+configured once on npmjs.com: package **Settings → Trusted Publisher → GitHub Actions**, with
+organization/user `RufiyanHasan`, repository `ng-health`, and workflow `release.yml`. The repo
+setting "Allow GitHub Actions to create and approve pull requests" must be on for the version PR.
 
 To preview what would be released: `npx changeset status --verbose`.

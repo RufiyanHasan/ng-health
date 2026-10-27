@@ -168,7 +168,7 @@ describe('repository workflows', () => {
     expect(setup?.with?.['node-version']).toBe('lts/*');
   });
 
-  it('release.yml versions with Changesets and publishes with provenance using NPM_TOKEN', async () => {
+  it('release.yml versions with Changesets and publishes via Trusted Publishing (no token)', async () => {
     const wf = await load('release.yml');
     expect(wf.on).toEqual({ push: { branches: ['main'] } });
     expect(wf.permissions).toEqual({
@@ -182,10 +182,11 @@ describe('repository workflows', () => {
       'publish-script': 'npm run release',
     });
     const env = (step as Step & { env?: Record<string, string> }).env;
-    expect(env).toEqual({
-      NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}',
-      NPM_CONFIG_PROVENANCE: 'true',
-    });
+    // Trusted Publishing: npm authenticates the workflow via OIDC, so no token is configured.
+    expect(env).toEqual({ NPM_CONFIG_PROVENANCE: 'true' });
+    expect(JSON.stringify(wf)).not.toContain('NPM_TOKEN');
+    const runs = wf.jobs['release']?.steps.map((s) => s.run) ?? [];
+    expect(runs).toContain('npm install -g npm@^11.5.1');
     const { scripts } = JSON.parse(
       await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as {
