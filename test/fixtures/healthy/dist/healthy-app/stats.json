@@ -1,0 +1,75 @@
+{
+  "inputs": {},
+  "outputs": {
+    "main-HLTH1234.js": {
+      "bytes": 61440,
+      "entryPoint": "src/main.ts",
+      "imports": [
+        {
+          "path": "chunk-SHRD7890.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "chunk-LAZY3456.js",
+          "kind": "dynamic-import"
+        }
+      ],
+      "inputs": {
+        "node_modules/@angular/core/fesm2022/core.mjs": {
+          "bytesInOutput": 38000
+        },
+        "node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs": {
+          "bytesInOutput": 9000
+        },
+        "src/app/app.component.ts": {
+          "bytesInOutput": 1800
+        },
+        "src/main.ts": {
+          "bytesInOutput": 120
+        }
+      }
+    },
+    "chunk-SHRD7890.js": {
+      "bytes": 8192,
+      "imports": [],
+      "inputs": {
+        "node_modules/.pnpm/rxjs@7.8.1/node_modules/rxjs/dist/esm/internal/Observable.js": {
+          "bytesInOutput": 6500
+        }
+      }
+    },
+    "chunk-LAZY3456.js": {
+      "bytes": 20480,
+      "imports": [
+        {
+          "path": "chunk-SHRD7890.js",
+          "kind": "import-statement"
+        }
+      ],
+      "inputs": {
+        "src/app/todo-list/todo-list.component.ts": {
+          "bytesInOutput": 2400
+        },
+        "node_modules/@angular/common/fesm2022/common.mjs": {
+          "bytesInOutput": 15000
+        }
+      }
+    },
+    "polyfills-POLY5678.js": {
+      "bytes": 12288,
+      "entryPoint": "angular:polyfills",
+      "imports": [],
+      "inputs": {
+        "angular:polyfills": {
+          "bytesInOutput": 11000
+        }
+      }
+    },
+    "styles-STYL9012.css": {
+      "bytes": 3072,
+      "entryPoint": "angular:styles/global:styles",
+      "imports": [],
+      "inputs": {}
+    }
+  }
+}

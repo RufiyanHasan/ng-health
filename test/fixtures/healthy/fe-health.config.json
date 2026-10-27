@@ -1,0 +1,5 @@
+{
+  "offline": true,
+  "thresholds": { "minOverallScore": 80, "maxCriticalVulnerabilities": 0, "maxInitialBundleKb": 500 },
+  "output": { "formats": ["console"] }
+}

@@ -1,0 +1,10 @@
+<section>
+  <h2>Users ({{ visibleUsers().length }})</h2>
+  <p *ngIf="isEmpty()">No users</p>
+  <ul>
+    <li *ngFor="let user of visibleUsers(); trackBy: trackById" (click)="select(user)">
+      <app-user-card [user]="user"></app-user-card>
+    </li>
+  </ul>
+  <span>{{ ticks }}</span>
+</section>

@@ -1,0 +1,45 @@
+import { spawn } from 'node:child_process';
+
+export interface ExecOptions {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  signal?: AbortSignal;
+  /** Max bytes buffered per stream (default 64 MB). */
+  maxBuffer?: number;
+}
+
+export interface ExecResult {
+  stdout: string;
+  stderr: string;
+  /** Process exit code; many tools (npm outdated/audit) exit non-zero on findings. */
+  exitCode: number;
+}
+
+export type ExecFn = (command: string, args: string[], opts?: ExecOptions) => Promise<ExecResult>;
+
+/**
+ * Runs a command without a shell. Rejects only if the process cannot be started or is
+ * aborted; a non-zero exit code is returned, not thrown.
+ */
+export const exec: ExecFn = (command, args, opts = {}) =>
+  new Promise((resolve, reject) => {
+    const maxBuffer = opts.maxBuffer ?? 64 * 1024 * 1024;
+    const child = spawn(command, args, {
+      cwd: opts.cwd,
+      env: { ...process.env, ...opts.env },
+      signal: opts.signal,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // npm/pnpm/yarn are .cmd shims on Windows
+      shell: process.platform === 'win32',
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d: Buffer) => {
+      if (stdout.length < maxBuffer) stdout += d.toString();
+    });
+    child.stderr.on('data', (d: Buffer) => {
+      if (stderr.length < maxBuffer) stderr += d.toString();
+    });
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ stdout, stderr, exitCode: code ?? 1 }));
+  });

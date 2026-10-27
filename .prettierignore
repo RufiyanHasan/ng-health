@@ -2,5 +2,5 @@ dist
 coverage
 node_modules
 package-lock.json
-test/fixtures/**/dist
+test/fixtures
 schema

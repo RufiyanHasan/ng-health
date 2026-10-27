@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "projects": {
+    // comments are allowed in angular.json
+    "unhealthy-app": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": { "outputPath": "dist/unhealthy-app", "browser": "src/main.ts" },
+          "configurations": {
+            "production": {
+              "budgets": [
+                { "type": "initial", "maximumWarning": "50kb", "maximumError": "100kb" },
+                { "type": "anyScript", "maximumWarning": "120kb" }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

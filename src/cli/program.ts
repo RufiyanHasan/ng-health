@@ -44,6 +44,8 @@ export function buildProgram(
     .option('--skip <checks>', 'skip these check ids/categories (comma-separated)', collect)
     .option('-c, --config <file>', `config file (default: <path>/fe-health.config.json)`)
     .option('--ci', 'CI mode: no spinner, Markdown summary, fail on thresholds')
+    .option('--no-build', 'reuse the existing build output instead of running a production build')
+    .option('--offline', 'never touch the network (skips registry lookups)')
     .option('--verbose', 'verbose diagnostic output')
     .action(async (projectPath: string, flags: AuditCliFlags) => {
       const outcome = await audit(projectPath, flags, logger);

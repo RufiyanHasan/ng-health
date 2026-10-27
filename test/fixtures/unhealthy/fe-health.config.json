@@ -1,0 +1,8 @@
+{
+  "offline": true,
+  "checks": {
+    "angular/large-components": { "options": { "maxLoc": 40 } }
+  },
+  "thresholds": { "minOverallScore": 80, "maxCriticalVulnerabilities": 0, "maxInitialBundleKb": 500 },
+  "output": { "formats": ["console"] }
+}

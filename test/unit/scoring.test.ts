@@ -105,4 +105,34 @@ describe('evaluateThresholds', () => {
       evaluateThresholds({ minOverallScore: 70 }, computeScores([], parseConfig({})), []),
     ).toEqual([]);
   });
+
+  it('evaluates bundle and vulnerability thresholds from check results', () => {
+    const results = [
+      result('bundle/size', 50, { meta: { initialKb: 612.5 } }),
+      result('dependencies/vulnerabilities', 40, { meta: { counts: {} } }),
+    ];
+    const findings = [
+      { ...f('critical'), checkId: 'dependencies/vulnerabilities' },
+      { ...f('critical'), checkId: 'other/check' },
+    ];
+    const r = evaluateThresholds(
+      { maxInitialBundleKb: 500, maxCriticalVulnerabilities: 0 },
+      computeScores(results, parseConfig({})),
+      findings,
+      results,
+    );
+    expect(r.map((t) => [t.id, t.passed, t.actual])).toEqual([
+      ['maxInitialBundleKb', false, 612.5],
+      ['maxCriticalVulnerabilities', false, 1],
+    ]);
+    // Not evaluated when the measuring check did not complete (e.g. offline)
+    expect(
+      evaluateThresholds(
+        { maxCriticalVulnerabilities: 0 },
+        computeScores([], parseConfig({})),
+        [],
+        [],
+      ),
+    ).toEqual([]);
+  });
 });

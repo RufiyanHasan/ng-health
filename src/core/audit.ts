@@ -14,7 +14,7 @@ import { loadPlugins } from './plugins.js';
 import { createProgress } from './progress.js';
 import { selectChecks, validateRegistry } from './registry.js';
 import { buildReport, type AuditReport } from './report.js';
-import { runChecks } from './runner.js';
+import { runChecks, type BaseContext } from './runner.js';
 import { computeScores } from './scoring.js';
 import { evaluateThresholds } from './thresholds.js';
 import type { Check, CheckResult } from './types.js';
@@ -29,6 +29,8 @@ export interface AuditOutcome {
 export interface AuditDeps {
   /** Override the built-in checks (tests, embedding). */
   checks?: Check[];
+  /** Override context pieces (tests inject exec/now). */
+  context?: Partial<BaseContext>;
 }
 
 export async function audit(
@@ -69,7 +71,12 @@ export async function audit(
 
   const total = selection.selected.length;
   progress.start(`Running ${total} checks…`);
-  const ran = await runChecks(selection.selected, createBaseContext(project, config, logger), {
+  const context = createBaseContext(project, config, logger, {
+    build: options.build,
+    offline: options.offline,
+    ...deps.context,
+  });
+  const ran = await runChecks(selection.selected, context, {
     severityPenalties: { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties },
     onStart: (check) => logger.debug(`Starting ${check.id}`),
     onDone: (r, done) => {
@@ -101,7 +108,7 @@ export async function audit(
 
   const scores = computeScores(results, config);
   const findings = results.flatMap((r) => r.findings);
-  const thresholds = evaluateThresholds(config.thresholds, scores, findings);
+  const thresholds = evaluateThresholds(config.thresholds, scores, findings, results);
   const report = buildReport({ project, results, scores, thresholds, startedAt });
 
   if (options.formats.includes('console')) logger.out(renderConsole(report));

@@ -92,6 +92,8 @@ export async function runCheck(
           ...base,
           options: settings.options ?? {},
           signal,
+          exec: (cmd, args, execOpts) =>
+            base.exec(cmd, args, { cwd: base.root, ...execOpts, signal }),
           logger: {
             ...base.logger,
             debug: (msg) => base.logger.debug(`[${check.id}] ${msg}`),

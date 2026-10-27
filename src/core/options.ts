@@ -12,6 +12,9 @@ export interface AuditCliFlags {
   ci?: boolean;
   verbose?: boolean;
   config?: string;
+  /** commander maps --no-build to build: false */
+  build?: boolean;
+  offline?: boolean;
 }
 
 /** Fully-resolved audit options: CLI flags merged over config. */
@@ -24,6 +27,8 @@ export interface AuditOptions {
   ci: boolean;
   verbose: boolean;
   configFile: string | undefined;
+  build: boolean;
+  offline: boolean;
 }
 
 /** Splits repeated and comma-separated values: ["html,json", "md"] → ["html","json","md"]. */
@@ -68,5 +73,7 @@ export function resolveAuditOptions(
     ci,
     verbose: Boolean(flags.verbose),
     configFile,
+    build: flags.build !== false,
+    offline: Boolean(flags.offline) || config.offline,
   };
 }

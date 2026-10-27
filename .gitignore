@@ -5,3 +5,4 @@ fe-health-report/
 *.log
 .DS_Store
 !test/fixtures/**/dist/
+!test/fixtures/**/coverage/

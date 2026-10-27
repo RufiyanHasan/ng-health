@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { audit } from '../../src/core/audit.js';
 import { silentLogger } from '../../src/core/logger.js';
 import { finding, stubCheck } from '../helpers/checks.js';
+import { fixture } from '../helpers/fixtures.js';
 import { angularApp, makeTempProject } from '../helpers/tmp.js';
 
 const checks = [
@@ -66,5 +67,22 @@ describe('audit', () => {
       ['custom/todo', 'src/app.ts'],
     ]);
     expect(exitCode).toBe(1);
+  });
+
+  it('passes the healthy fixture and fails the unhealthy one with the built-in checks', async () => {
+    const healthy = await audit(fixture('healthy'), {}, silentLogger);
+    expect(healthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 2 });
+    expect(healthy.report.score.overall).toBe(100);
+    expect(healthy.exitCode).toBe(0);
+
+    const unhealthy = await audit(fixture('unhealthy'), {}, silentLogger);
+    expect(unhealthy.report.summary.checks).toEqual({ completed: 15, errored: 0, skipped: 2 });
+    expect(unhealthy.report.score.overall).toBeLessThan(40);
+    expect(unhealthy.report.thresholds.find((t) => t.id === 'minOverallScore')?.passed).toBe(false);
+    expect(unhealthy.report.thresholds.find((t) => t.id === 'maxInitialBundleKb')).toMatchObject({
+      passed: true,
+      actual: 190,
+    });
+    expect(unhealthy.exitCode).toBe(1);
   });
 });

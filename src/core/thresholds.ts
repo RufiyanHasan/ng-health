@@ -1,6 +1,6 @@
 import { SEVERITIES, type Thresholds } from './config/schema.js';
 import type { ScoreSummary } from './scoring.js';
-import type { ReportedFinding } from './types.js';
+import type { CheckResult, ReportedFinding } from './types.js';
 
 export interface ThresholdResult {
   id: string;
@@ -10,16 +10,17 @@ export interface ThresholdResult {
   expected: number | string;
 }
 
-/** Evaluates score- and severity-based thresholds. Domain thresholds are added by their checks' phases. */
+/** Evaluates thresholds. Domain thresholds read the meta of the check that measures them. */
 export function evaluateThresholds(
   thresholds: Thresholds,
   scores: ScoreSummary,
   findings: ReportedFinding[],
+  results: CheckResult[] = [],
 ): ThresholdResult[] {
-  const results: ThresholdResult[] = [];
+  const out: ThresholdResult[] = [];
 
   if (thresholds.minOverallScore !== undefined && scores.overall !== undefined) {
-    results.push({
+    out.push({
       id: 'minOverallScore',
       description: 'Overall score',
       passed: scores.overall >= thresholds.minOverallScore,
@@ -31,7 +32,7 @@ export function evaluateThresholds(
   for (const [category, min] of Object.entries(thresholds.minCategoryScores ?? {})) {
     const score = scores.categories.find((c) => c.id === category)?.score;
     if (score === undefined) continue;
-    results.push({
+    out.push({
       id: `minCategoryScores.${category}`,
       description: `${category} score`,
       passed: score >= min,
@@ -43,7 +44,7 @@ export function evaluateThresholds(
   if (thresholds.failOnSeverity) {
     const limit = SEVERITIES.indexOf(thresholds.failOnSeverity);
     const count = findings.filter((f) => SEVERITIES.indexOf(f.severity) <= limit).length;
-    results.push({
+    out.push({
       id: 'failOnSeverity',
       description: `Findings at or above "${thresholds.failOnSeverity}"`,
       passed: count === 0,
@@ -52,5 +53,31 @@ export function evaluateThresholds(
     });
   }
 
-  return results;
+  const meta = (id: string) => results.find((r) => r.id === id && r.status === 'completed')?.meta;
+
+  const initialKb = meta('bundle/size')?.['initialKb'];
+  if (thresholds.maxInitialBundleKb !== undefined && typeof initialKb === 'number') {
+    out.push({
+      id: 'maxInitialBundleKb',
+      description: 'Initial bundle size (kB)',
+      passed: initialKb <= thresholds.maxInitialBundleKb,
+      actual: initialKb,
+      expected: `≤ ${thresholds.maxInitialBundleKb}`,
+    });
+  }
+
+  if (thresholds.maxCriticalVulnerabilities !== undefined && meta('dependencies/vulnerabilities')) {
+    const count = findings.filter(
+      (f) => f.checkId === 'dependencies/vulnerabilities' && f.severity === 'critical',
+    ).length;
+    out.push({
+      id: 'maxCriticalVulnerabilities',
+      description: 'Critical vulnerabilities',
+      passed: count <= thresholds.maxCriticalVulnerabilities,
+      actual: count,
+      expected: `≤ ${thresholds.maxCriticalVulnerabilities}`,
+    });
+  }
+
+  return out;
 }

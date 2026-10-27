@@ -1,5 +1,6 @@
 import type { Config, Severity } from './config/schema.js';
 import type { ProjectInfo } from './detect/index.js';
+import type { ExecFn } from './exec.js';
 import type { Logger } from './logger.js';
 
 export type { Severity } from './config/schema.js';
@@ -47,6 +48,12 @@ export interface CheckContext {
   /** Aborted when the check times out; pass it to child processes and long loops. */
   signal: AbortSignal;
   offline: boolean;
+  /** False when the user passed --no-build: reuse existing build output. */
+  build: boolean;
+  /** Current time; injectable so date-based checks (support windows) are testable. */
+  now(): Date;
+  /** Runs a command (no shell) in the project root by default; aborted on timeout. */
+  exec: ExecFn;
   /** Globs project files (relative POSIX paths), honouring the configured ignore globs. */
   glob(patterns: string | string[], opts?: { cwd?: string }): Promise<string[]>;
   /** Reads a file relative to the project root. */

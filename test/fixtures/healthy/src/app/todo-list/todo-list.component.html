@@ -1,0 +1,7 @@
+<ul>
+  @for (todo of todos(); track todo.id) {
+    <li [class.done]="todo.done" (click)="toggle.emit(todo.id)">{{ todo.title }}</li>
+  } @empty {
+    <li>Nothing to do</li>
+  }
+</ul>
