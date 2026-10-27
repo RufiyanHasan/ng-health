@@ -74,18 +74,24 @@ export async function audit(
   const context = createBaseContext(project, config, logger, {
     build: options.build,
     offline: options.offline,
+    runtime: options.runtime,
     ...deps.context,
   });
-  const ran = await runChecks(selection.selected, context, {
-    severityPenalties: { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties },
-    onStart: (check) => logger.debug(`Starting ${check.id}`),
-    onDone: (r, done) => {
-      progress.update(`Running checks (${done}/${total}) — finished ${r.id}`);
-      logger.debug(
-        `Finished ${r.id}: ${r.status}${r.reason ? ` (${r.reason})` : ''} in ${r.durationMs}ms`,
-      );
-    },
-  });
+  let ran: CheckResult[];
+  try {
+    ran = await runChecks(selection.selected, context, {
+      severityPenalties: { ...DEFAULT_SEVERITY_PENALTIES, ...config.severityPenalties },
+      onStart: (check) => logger.debug(`Starting ${check.id}`),
+      onDone: (r, done) => {
+        progress.update(`Running checks (${done}/${total}) — finished ${r.id}`);
+        logger.debug(
+          `Finished ${r.id}: ${r.status}${r.reason ? ` (${r.reason})` : ''} in ${r.durationMs}ms`,
+        );
+      },
+    });
+  } finally {
+    await context.dispose();
+  }
   progress.stop();
 
   // Report every registered check, in registry order, including excluded ones.

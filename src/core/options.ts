@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { Config, ReportFormat } from './config/schema.js';
+import type { Config, ReportFormat, RuntimeConfig } from './config/schema.js';
 import { REPORT_FORMATS } from './config/schema.js';
 import { FeHealthError } from './errors.js';
 
@@ -15,6 +15,9 @@ export interface AuditCliFlags {
   /** commander maps --no-build to build: false */
   build?: boolean;
   offline?: boolean;
+  url?: string;
+  routes?: string[];
+  loginScript?: string;
 }
 
 /** Fully-resolved audit options: CLI flags merged over config. */
@@ -29,6 +32,8 @@ export interface AuditOptions {
   configFile: string | undefined;
   build: boolean;
   offline: boolean;
+  /** Runtime settings with CLI overrides applied and loginScript made absolute. */
+  runtime: RuntimeConfig;
 }
 
 /** Splits repeated and comma-separated values: ["html,json", "md"] → ["html","json","md"]. */
@@ -75,5 +80,38 @@ export function resolveAuditOptions(
     configFile,
     build: flags.build !== false,
     offline: Boolean(flags.offline) || config.offline,
+    runtime: resolveRuntime(flags, config, configFile, cwd),
+  };
+}
+
+function resolveRuntime(
+  flags: AuditCliFlags,
+  config: Config,
+  configFile: string | undefined,
+  cwd: string,
+): RuntimeConfig {
+  const routes = splitList(flags.routes);
+  for (const r of routes) {
+    if (!r.startsWith('/')) throw new FeHealthError(`Routes must start with "/": ${r}`);
+  }
+  if (flags.url) {
+    try {
+      new URL(flags.url);
+    } catch {
+      throw new FeHealthError(`Invalid --url: ${flags.url}`);
+    }
+  }
+  // CLI paths are relative to the working directory, config paths to the config file.
+  const configDir = configFile ? path.dirname(configFile) : cwd;
+  const loginScript = flags.loginScript
+    ? path.resolve(cwd, flags.loginScript)
+    : config.runtime.loginScript
+      ? path.resolve(configDir, config.runtime.loginScript)
+      : undefined;
+  return {
+    ...config.runtime,
+    ...(flags.url ? { url: flags.url } : {}),
+    ...(routes.length ? { routes } : {}),
+    ...(loginScript ? { loginScript } : {}),
   };
 }

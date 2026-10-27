@@ -57,4 +57,37 @@ describe('resolveAuditOptions', () => {
       'md',
     ]);
   });
+
+  it('resolves runtime flags: url, routes and login script paths', () => {
+    const cfg = parseConfig({ runtime: { routes: ['/a'], loginScript: 'scripts/login.mjs' } });
+    const fromConfig = resolveAuditOptions('.', {}, cfg, '/proj/fe-health.config.json', '/work');
+    expect(fromConfig.runtime).toMatchObject({
+      routes: ['/a'],
+      loginScript: '/proj/scripts/login.mjs',
+      formFactor: 'mobile',
+    });
+
+    const fromCli = resolveAuditOptions(
+      '.',
+      {
+        url: 'https://staging.example.com',
+        routes: ['/,/products', '/cart'],
+        loginScript: 'login.mjs',
+      },
+      cfg,
+      '/proj/fe-health.config.json',
+      '/work',
+    );
+    expect(fromCli.runtime).toMatchObject({
+      url: 'https://staging.example.com',
+      routes: ['/', '/products', '/cart'],
+      loginScript: '/work/login.mjs',
+    });
+    expect(() => resolveAuditOptions('.', { routes: ['products'] }, cfg, undefined, '/w')).toThrow(
+      /must start with "\/"/,
+    );
+    expect(() => resolveAuditOptions('.', { url: 'not a url' }, cfg, undefined, '/w')).toThrow(
+      /Invalid --url/,
+    );
+  });
 });

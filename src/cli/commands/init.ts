@@ -21,6 +21,7 @@ export const DEFAULT_CONFIG: ConfigInput = {
     maxCriticalA11yViolations: 0,
   },
   ignore: ['**/node_modules/**', '**/dist/**', '**/.angular/**', '**/coverage/**'],
+  runtime: { routes: ['/'], formFactor: 'mobile' },
   output: { dir: 'fe-health-report', formats: ['console', 'html'] },
 };
 

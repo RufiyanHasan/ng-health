@@ -56,6 +56,24 @@ export const DEFAULT_IGNORE = [
   '**/coverage/**',
 ];
 
+export const DEFAULT_AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+const RuntimeSchema = z.strictObject({
+  /** Audit a running app instead of serving the local build (e.g. a staging URL). */
+  url: z.url().optional(),
+  /** Routes (paths) to audit with Lighthouse and axe. */
+  routes: z.array(z.string().startsWith('/')).min(1).default(['/']),
+  /** Module run before the runtime checks to log in (see docs/login-script.md). */
+  loginScript: z.string().optional(),
+  /** Chrome/Chromium executable. Defaults to CHROME_PATH or an auto-detected installation. */
+  chromePath: z.string().optional(),
+  /** Lighthouse emulation. */
+  formFactor: z.enum(['mobile', 'desktop']).default('mobile'),
+  /** axe-core rule tags to run. */
+  axeTags: z.array(z.string()).min(1).default(DEFAULT_AXE_TAGS),
+});
+export type RuntimeConfig = z.output<typeof RuntimeSchema>;
+
 export const ConfigSchema = z.strictObject({
   $schema: z.string().optional(),
   /** Per-check settings keyed by check id ("angular/onpush") or category ("angular"). `false` disables. */
@@ -79,6 +97,7 @@ export const ConfigSchema = z.strictObject({
       formats: z.array(ReportFormatSchema).min(1).default(['console', 'html']),
     })
     .prefault({}),
+  runtime: RuntimeSchema.prefault({}),
   /** Never touch the network (skips registry lookups such as npm outdated/audit). */
   offline: z.boolean().default(false),
 });

@@ -1,4 +1,4 @@
-import type { Config, Severity } from './config/schema.js';
+import type { Config, RuntimeConfig, Severity } from './config/schema.js';
 import type { ProjectInfo } from './detect/index.js';
 import type { ExecFn } from './exec.js';
 import type { Logger } from './logger.js';
@@ -54,6 +54,10 @@ export interface CheckContext {
   now(): Date;
   /** Runs a command (no shell) in the project root by default; aborted on timeout. */
   exec: ExecFn;
+  /** Runtime (browser) settings: target URL, routes, login script, Chrome path. */
+  runtime: RuntimeConfig;
+  /** Registers teardown (servers, browsers) that runs after all checks have finished. */
+  onCleanup(fn: () => Promise<void> | void): void;
   /** Globs project files (relative POSIX paths), honouring the configured ignore globs. */
   glob(patterns: string | string[], opts?: { cwd?: string }): Promise<string[]>;
   /** Reads a file relative to the project root. */

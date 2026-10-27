@@ -4,12 +4,39 @@ import json, os, sys
 root = os.path.join(os.path.dirname(__file__), '..', 'test', 'fixtures')
 
 def filler(name, size, ext):
+    """Valid JS/CSS of exactly `size` bytes: whole lines, then a padding comment."""
     line = (f'/*{name}*/function f{{i}}(a,b){{return a*{{i}}+b%{{i}}}}\n' if ext == 'js'
             else f'.c{{i}}{{margin:{{i}}px;padding:{{i}}px}}\n')
-    out, i = [], 1
-    while sum(map(len, out)) < size:
-        out.append(line.replace('{i}', str(i))); i += 1
-    return ''.join(out)[:size]
+    out, total, i = [], 0, 1
+    while True:
+        nxt = line.replace('{i}', str(i))
+        if total + len(nxt) > size - 16:
+            break
+        out.append(nxt); total += len(nxt); i += 1
+    pad = size - total
+    out.append('/*' + 'x' * (pad - 5) + '*/\n')
+    return ''.join(out)
+
+HEALTHY_BODY = '''<header><nav aria-label="Main"><a href="/">Home</a> <a href="/about">About</a></nav></header>
+<main><h1>Todos</h1><p>Everything you need to do, in one place.</p>
+<form><label for="new-todo">New todo</label> <input id="new-todo" name="todo"> <button type="submit">Add</button></form>
+<ul><li>Write the report</li><li>Ship it</li></ul></main>
+<app-root></app-root>'''
+
+# Deliberate WCAG violations: missing lang/title/alt/labels/names, low contrast.
+UNHEALTHY_BODY = '''<div class="header"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="/profile"><i class="icon"></i></a></div>
+<div class="content"><p style="color:#bbb;background:#fff">Low contrast welcome text</p>
+<input type="text" placeholder="Search"> <button><i class="icon-search"></i></button>
+<button>Save</button></div>
+<app-root></app-root>'''
+
+HEAD = {
+    'healthy': '<html lang="en"><head><meta charset="utf-8"><title>Healthy App</title>'
+               '<meta name="viewport" content="width=device-width, initial-scale=1">'
+               '<meta name="description" content="A small, healthy Angular fixture app.">'
+               '<link rel="icon" href="data:,">',
+    'unhealthy': '<html><head><meta charset="utf-8"><link rel="icon" href="data:,">',
+}
 
 def write(app, files, index_refs, stats=None):
     browser = os.path.join(root, app['fixture'], 'dist', app['name'], 'browser')
@@ -20,7 +47,8 @@ def write(app, files, index_refs, stats=None):
     scripts = ''.join(f'<script src="{f}" type="module"></script>' for f in index_refs if f.endswith('.js'))
     links = ''.join(f'<link rel="stylesheet" href="{f}">' for f in index_refs if f.endswith('.css'))
     with open(os.path.join(browser, 'index.html'), 'w') as fh:
-        fh.write(f'<!doctype html><html><head>{links}</head><body><app-root></app-root>{scripts}</body></html>\n')
+        body = HEALTHY_BODY if app['fixture'] == 'healthy' else UNHEALTHY_BODY
+        fh.write(f"<!doctype html>{HEAD[app['fixture']]}{links}</head><body>{body}{scripts}</body></html>\n")
     if stats:
         with open(os.path.join(root, app['fixture'], 'dist', app['name'], 'stats.json'), 'w') as fh:
             json.dump(stats, fh, indent=2)

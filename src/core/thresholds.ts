@@ -79,5 +79,16 @@ export function evaluateThresholds(
     });
   }
 
+  const criticalA11y = meta('accessibility/axe')?.['criticalViolations'];
+  if (thresholds.maxCriticalA11yViolations !== undefined && typeof criticalA11y === 'number') {
+    out.push({
+      id: 'maxCriticalA11yViolations',
+      description: 'Critical accessibility violations (elements)',
+      passed: criticalA11y <= thresholds.maxCriticalA11yViolations,
+      actual: criticalA11y,
+      expected: `≤ ${thresholds.maxCriticalA11yViolations}`,
+    });
+  }
+
   return out;
 }

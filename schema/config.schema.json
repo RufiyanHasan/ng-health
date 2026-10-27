@@ -182,6 +182,57 @@
       },
       "additionalProperties": false
     },
+    "runtime": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "routes": {
+          "default": [
+            "/"
+          ],
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "starts_with",
+            "pattern": "^\\/.*"
+          }
+        },
+        "loginScript": {
+          "type": "string"
+        },
+        "chromePath": {
+          "type": "string"
+        },
+        "formFactor": {
+          "default": "mobile",
+          "type": "string",
+          "enum": [
+            "mobile",
+            "desktop"
+          ]
+        },
+        "axeTags": {
+          "default": [
+            "wcag2a",
+            "wcag2aa",
+            "wcag21a",
+            "wcag21aa",
+            "wcag22aa"
+          ],
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "offline": {
       "default": false,
       "type": "boolean"

@@ -4,6 +4,7 @@ import { gzipSync } from 'node:zlib';
 import { pathExists, readJsonFile } from '../../core/fs.js';
 import { defineCheck, skipCheck, type CheckContext, type Finding } from '../../core/types.js';
 import { bool, clampScore, num } from '../util.js';
+import { resolveBuildOutput } from './output.js';
 import { DEFAULT_BUDGETS, formatKb, KB, parseSize, type Budget } from './budgets.js';
 import {
   initialFromIndexHtml,
@@ -108,25 +109,14 @@ export default defineCheck({
   exclusive: true,
   timeoutMs: 15 * 60_000,
   async run(ctx) {
-    const app =
-      (typeof ctx.options['project'] === 'string' ? ctx.options['project'] : undefined) ??
-      ctx.project.projects.find(
-        (p) => p.name === ctx.project.defaultProject && p.type === 'application',
-      )?.name ??
-      ctx.project.projects.find((p) => p.type === 'application')?.name;
-    if (!app) skipCheck('No application project found in angular.json');
-    const info = ctx.project.projects.find((p) => p.name === app);
-    const outputPath =
-      (typeof ctx.options['outputPath'] === 'string' ? ctx.options['outputPath'] : undefined) ??
-      info?.outputPath ??
-      `dist/${app}`;
+    const target = await resolveBuildOutput(ctx);
+    if (!target) skipCheck('No application project found in angular.json');
+    const { app, outputPath, outDir } = target;
 
     const built = ctx.build && bool(ctx, 'build', true) ? await build(ctx, app) : false;
 
-    const outDir = path.join(ctx.root, outputPath);
-    const browserDir = (await pathExists(path.join(outDir, 'browser')))
-      ? path.join(outDir, 'browser')
-      : outDir;
+    // Re-resolve: the build may have created <out>/browser.
+    const { browserDir } = (await resolveBuildOutput(ctx)) ?? target;
     const assets = (await pathExists(browserDir)) ? await listAssets(browserDir) : [];
     if (!assets.some((a) => /\.m?js$/.test(a.name))) {
       skipCheck(

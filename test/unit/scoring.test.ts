@@ -110,13 +110,14 @@ describe('evaluateThresholds', () => {
     const results = [
       result('bundle/size', 50, { meta: { initialKb: 612.5 } }),
       result('dependencies/vulnerabilities', 40, { meta: { counts: {} } }),
+      result('accessibility/axe', 10, { meta: { criticalViolations: 3 } }),
     ];
     const findings = [
       { ...f('critical'), checkId: 'dependencies/vulnerabilities' },
       { ...f('critical'), checkId: 'other/check' },
     ];
     const r = evaluateThresholds(
-      { maxInitialBundleKb: 500, maxCriticalVulnerabilities: 0 },
+      { maxInitialBundleKb: 500, maxCriticalVulnerabilities: 0, maxCriticalA11yViolations: 0 },
       computeScores(results, parseConfig({})),
       findings,
       results,
@@ -124,6 +125,7 @@ describe('evaluateThresholds', () => {
     expect(r.map((t) => [t.id, t.passed, t.actual])).toEqual([
       ['maxInitialBundleKb', false, 612.5],
       ['maxCriticalVulnerabilities', false, 1],
+      ['maxCriticalA11yViolations', false, 3],
     ]);
     // Not evaluated when the measuring check did not complete (e.g. offline)
     expect(

@@ -1,3 +1,4 @@
+import accessibilityAxe from './accessibility/axe.js';
 import angularAnyUsage from './angular/any-usage.js';
 import angularControlFlow from './angular/control-flow.js';
 import angularInjectFunction from './angular/inject-function.js';
@@ -15,6 +16,7 @@ import hygieneCoverage from './hygiene/coverage.js';
 import hygieneTests from './hygiene/tests.js';
 import hygieneTooling from './hygiene/tooling.js';
 import hygieneTypescriptStrict from './hygiene/typescript-strict.js';
+import performanceLighthouse from './performance/lighthouse.js';
 import type { Check } from '../core/types.js';
 
 /** Built-in checks. Each lives in its own module under src/checks/<category>/. */
@@ -36,4 +38,7 @@ export const builtinChecks: Check[] = [
   hygieneTypescriptStrict,
   hygieneTests,
   hygieneCoverage,
+  // Runtime checks run last (exclusive), after bundle/size has produced a build.
+  performanceLighthouse,
+  accessibilityAxe,
 ];

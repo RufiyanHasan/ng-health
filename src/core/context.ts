@@ -3,17 +3,24 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { Config } from './config/schema.js';
 import type { ProjectInfo } from './detect/index.js';
+import { errorMessage } from './errors.js';
 import { exec } from './exec.js';
 import type { Logger } from './logger.js';
 import type { BaseContext } from './runner.js';
+
+export interface AuditContext extends BaseContext {
+  /** Runs registered cleanups in reverse order; never throws. */
+  dispose(): Promise<void>;
+}
 
 export function createBaseContext(
   project: ProjectInfo,
   config: Config,
   logger: Logger,
   overrides: Partial<BaseContext> = {},
-): BaseContext {
+): AuditContext {
   const cache = new Map<string, Promise<unknown>>();
+  const cleanups: (() => Promise<void> | void)[] = [];
   return {
     root: project.root,
     project,
@@ -23,6 +30,8 @@ export function createBaseContext(
     build: true,
     now: () => new Date(),
     exec,
+    runtime: config.runtime,
+    onCleanup: (fn) => void cleanups.push(fn),
     glob: (patterns, opts) =>
       fg(patterns, {
         cwd: opts?.cwd ? path.resolve(project.root, opts.cwd) : project.root,
@@ -40,5 +49,14 @@ export function createBaseContext(
       return value as Promise<T>;
     },
     ...overrides,
+    dispose: async () => {
+      for (const fn of cleanups.splice(0).reverse()) {
+        try {
+          await fn();
+        } catch (err) {
+          logger.debug(`Cleanup failed: ${errorMessage(err)}`);
+        }
+      }
+    },
   };
 }
