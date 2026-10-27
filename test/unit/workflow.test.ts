@@ -193,6 +193,6 @@ describe('repository workflows', () => {
       scripts: Record<string, string>;
     };
     expect(scripts['version-packages']).toBe('changeset version');
-    expect(scripts['release']).toBe('npm run build && changeset publish');
+    expect(scripts['release']).toBe('npm run build && node scripts/stage-release.mjs');
   });
 });

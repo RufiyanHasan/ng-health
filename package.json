@@ -57,7 +57,7 @@
     "prepublishOnly": "npm run build",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "npm run build && changeset publish",
+    "release": "npm run build && node scripts/stage-release.mjs",
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {

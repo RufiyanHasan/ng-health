@@ -2,11 +2,12 @@
 #
 # On every push to main:
 #   - pending changesets → opens/updates a "chore: version packages" PR (version bump + CHANGELOG)
-#   - that PR merged (no pending changesets, unpublished version) → publishes to npm with
-#     provenance, tags the release and creates a GitHub release
+#   - that PR merged (no pending changesets, unpublished version) → STAGES the release on npm
+#     with provenance (scripts/stage-release.mjs). It stays private until a maintainer approves
+#     it with 2FA: `npm stage approve <id>` (the job summary shows the exact commands).
 #
-# Auth: npm Trusted Publishing (OIDC). No npm token is stored anywhere; npmjs.com trusts this
-# workflow file of this repository (package settings → Trusted Publisher → GitHub Actions,
+# Auth: npm Trusted Publishing (OIDC) with the "stage publish" permission. No npm token is stored;
+# npmjs.com trusts this workflow file (package settings → Trusted Publisher → GitHub Actions,
 # workflow "release.yml"). Requires npm >= 11.5.1, installed below.
 
 name: Release
@@ -52,12 +53,12 @@ jobs:
         uses: changesets/action@v2
         with:
           version-script: npm run version-packages
-          # `changeset publish` runs `npm publish` for versions not yet on npm (no-op otherwise);
-          # NPM_CONFIG_PROVENANCE makes that `npm publish --provenance`.
+          # Stages (never publishes) versions not yet on npm; no-op otherwise. Provenance via env.
           publish-script: npm run release
           commit-message: 'chore: version packages'
           pr-title: 'chore: version packages'
-          create-github-releases: true
+          # The version isn't public until approved, so tag/release after `npm stage approve`.
+          create-github-releases: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           NPM_CONFIG_PROVENANCE: 'true'

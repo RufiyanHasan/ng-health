@@ -110,20 +110,27 @@ The summary becomes the `CHANGELOG.md` entry, so write it for users: "Bundle che
 
 ### How a release happens
 
-Releases are automated by `.github/workflows/release.yml` (Changesets):
+Releases are automated by `.github/workflows/release.yml` (Changesets), with a final human
+approval step on npm (**staged publishing**):
 
 1. PRs with changesets are merged to `main`.
 2. The workflow opens (or updates) a **"chore: version packages"** PR. It bumps `version` in
    `package.json`, moves the changeset summaries into `CHANGELOG.md`, and deletes the changeset
    files.
 3. Review that PR (version number and changelog wording) and merge it.
-4. The workflow runs lint, tests and build, then publishes to npm with provenance
-   (`changeset publish`, which runs `npm publish --provenance` for versions not on npm yet).
-   It also tags `vX.Y.Z` and creates a GitHub release.
+4. The workflow runs lint, tests, build and the smoke test, then **stages** the new version on
+   npm with provenance (`scripts/stage-release.mjs`). A staged version is not public yet.
+5. **Approve it** with your 2FA. The workflow's job summary shows the exact commands:
+   ```bash
+   npm stage approve <stage-id>          # or approve it on npmjs.com
+   git tag vX.Y.Z && git push origin vX.Y.Z
+   ```
+   `npm stage list ng-health` shows pending stages; `npm stage reject <id>` discards one.
 
-Publishing uses npm **Trusted Publishing** (OIDC), so no npm token is stored anywhere. It's
-configured once on npmjs.com: package **Settings → Trusted Publisher → GitHub Actions**, with
-organization/user `RufiyanHasan`, repository `ng-health`, and workflow `release.yml`. The repo
-setting "Allow GitHub Actions to create and approve pull requests" must be on for the version PR.
+Authentication uses npm **Trusted Publishing** (OIDC), so no npm token is stored anywhere.
+It's configured once on npmjs.com (package **Settings → Trusted Publisher → GitHub Actions**:
+user `RufiyanHasan`, repository `ng-health`, workflow `release.yml`, with the **stage publish**
+permission). The repo setting "Allow GitHub Actions to create and approve pull requests" must
+be on for the version PR.
 
 To preview what would be released: `npx changeset status --verbose`.
