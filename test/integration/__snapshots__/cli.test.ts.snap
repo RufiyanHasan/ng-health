@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`fe-health CLI binary > Definition of Done: unhealthy fixture → html+json report, exit 1 1`] = `
+[
+  "critical dependencies/angular-version - | Angular 17 is end-of-life since 2025-05-08 (5 majors behind 22); it no longer receives security fixes.",
+  "high dependencies/deprecated package.json | protractor is deprecated or end-of-life.",
+  "high dependencies/deprecated package.json | tslint is deprecated or end-of-life.",
+  "high bundle/size angular.json | Initial bundle is 190.0 kB, over the initial budget error limit of 100.0 kB.",
+  "high angular/subscriptions src/app/dashboard/dashboard.component.ts:22 | DashboardComponent: subscribe() without cleanup (no takeUntilDestroyed/async pipe/DestroyRef cleanup).",
+  "high angular/subscriptions src/app/dashboard/dashboard.component.ts:24 | DashboardComponent: subscribe() without cleanup (subscription is stored but never unsubscribed).",
+  "high hygiene/tooling - | Only TSLint (deprecated) is configured; ESLint is missing.",
+  "high hygiene/typescript-strict tsconfig.json | TypeScript strict mode is off.",
+  "high hygiene/tests - | 25% of components/services have a spec file (target 80%). Untested: src/app/dashboard/dashboard.component.ts, src/app/settings.service.ts, src/app/user-card.component.ts.",
+  "high hygiene/coverage coverage/lcov.info | Line coverage is 30% (target 80%).",
+  "medium bundle/size angular.json | chunk-UNHL4444.js is 300.0 kB, over the anyScript budget warning limit of 120.0 kB.",
+  "medium bundle/size angular.json | main-UNHL1111.js is 150.0 kB, over the anyScript budget warning limit of 120.0 kB.",
+  "medium angular/onpush src/app/dashboard/dashboard.component.ts:6 | DashboardComponent uses default change detection.",
+  "medium angular/onpush src/app/user-card.component.ts:3 | UserCardComponent uses default change detection.",
+  "medium angular/template-calls src/app/dashboard/dashboard.component.html:2 | DashboardComponent template has 3 method calls in bindings: visibleUsers(), isEmpty().",
+  "medium angular/template-calls src/app/user-card.component.ts:7 | UserCardComponent template has 2 method calls in bindings: getFullName(), formatRole().",
+  "medium angular/large-components src/app/dashboard/dashboard.component.ts:6 | DashboardComponent has 42 lines (limit 40).",
+  "medium hygiene/typescript-strict tsconfig.json | Angular strictTemplates is off, so template bindings are not type-checked.",
+  "low dependencies/deprecated package.json | karma is deprecated or end-of-life.",
+  "low dependencies/deprecated package.json | moment is deprecated or end-of-life.",
+  "low bundle/size - | Lazy chunk chunk-UNHL4444.js is 300.0 kB (limit 250.0 kB).",
+  "low angular/control-flow src/app/dashboard/dashboard.component.html:3 | DashboardComponent template uses legacy structural directives (ngIf ×1, ngFor ×1).",
+  "low angular/control-flow src/app/user-card.component.ts:6 | UserCardComponent template uses legacy structural directives (ngSwitch ×1).",
+  "low angular/standalone src/app/dashboard/dashboard.component.ts:6 | DashboardComponent is declared in an NgModule instead of being standalone.",
+  "low angular/standalone src/app/user-card.component.ts:3 | UserCardComponent is declared in an NgModule instead of being standalone.",
+  "low angular/inject-function src/app/dashboard/dashboard.component.ts:6 | DashboardComponent uses constructor injection (2 params) while the project convention is inject().",
+  "low angular/any-usage src/app/dashboard/dashboard.component.ts:11 | 3 explicit \`any\`s in src/app/dashboard/dashboard.component.ts.",
+  "low angular/any-usage src/app/user-card.component.ts:14 | 1 explicit \`any\` in src/app/user-card.component.ts.",
+  "low angular/any-usage src/app/user.service.ts:8 | 2 explicit \`any\`s in src/app/user.service.ts.",
+  "low hygiene/tooling - | No Prettier configuration found.",
+  "low hygiene/typescript-strict tsconfig.json | Angular strictInjectionParameters is off.",
+]
+`;

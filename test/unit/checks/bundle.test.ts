@@ -204,4 +204,50 @@ describe('bundle/size', () => {
       topModules: [{ path: 'src/main.ts', bytes: 900 }],
     });
   });
+
+  it('evaluates every budget type and uses webpack stats', async () => {
+    const ws = angularApp();
+    const angularJson = ws['angular.json'] as {
+      projects: Record<string, { architect: { build: Record<string, unknown> } }>;
+    };
+    angularJson.projects['demo-app']!.architect.build['configurations'] = {
+      production: {
+        budgets: [
+          { type: 'initial', maximumError: '10kb' },
+          { type: 'allScript', maximumWarning: '10kb' },
+          { type: 'all', maximumError: '1kb' },
+          { type: 'any', maximumWarning: '6kb' },
+          { type: 'bundle', name: 'admin', maximumError: '2kb' },
+          { type: 'anyComponentStyle', maximumWarning: '1b' },
+          { type: 'initial' },
+        ],
+      },
+    };
+    const dir = await makeTempProject({
+      ...ws,
+      'dist/demo-app/main.js': 'x'.repeat(8 * 1024),
+      'dist/demo-app/admin-123.js': 'x'.repeat(3 * 1024),
+      'dist/demo-app/stats.json': {
+        chunks: [
+          { initial: true, files: ['main.js'] },
+          { initial: false, files: ['admin-123.js'] },
+        ],
+        modules: [{ name: './src/main.ts', size: 900 }],
+      },
+    });
+    const r = await runOn(size, dir, { context: { build: true } });
+    expect(r.meta).toMatchObject({
+      statsSource: 'webpack',
+      initialBytes: 8192,
+      built: false,
+      topModules: [{ path: 'src/main.ts', bytes: 900 }],
+    });
+    // In budget order (the report sorts by severity later).
+    expect(summarize(r).map((f) => [f[0], f[3]])).toEqual([
+      ['medium', 'All scripts is 11.0 kB, over the allScript budget warning limit of 10.0 kB.'],
+      ['high', 'All files is 11.0 kB, over the all budget error limit of 1.0 kB.'],
+      ['medium', 'main.js is 8.0 kB, over the any budget warning limit of 6.0 kB.'],
+      ['high', 'Bundle "admin" is 3.0 kB, over the bundle budget error limit of 2.0 kB.'],
+    ]);
+  });
 });
