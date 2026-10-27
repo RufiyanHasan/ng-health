@@ -4,7 +4,7 @@ exports[`markdown > renders a PR-comment summary 1`] = `
 "<!-- ng-health-report -->
 ## Frontend health: **76/100 (C)** — ❌ failed
 
-acme-shop · Angular 19.2.4 · npm · single app · 2026-10-27
+example-shop · Angular 19.2.4 · npm · single app · 2026-10-27
 
 | Category | Score |
 |---|---:|

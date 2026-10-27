@@ -42,6 +42,17 @@ describe('README', () => {
       expect(readme, `README is missing ${check.id}`).toContain(`\`${check.id}\``);
   });
 
+  it('documents every public library export and config file type', async () => {
+    const api = await import('../../src/index.js');
+    for (const name of Object.keys(api)) {
+      if (name === 'CheckSkipped') continue; // internal signal class behind skipCheck()
+      expect(readme, `README "Use as a library" is missing ${name}`).toContain(name);
+    }
+    for (const ext of ['.ts', '.mts', '.js', '.mjs', '.cjs', '.json']) {
+      expect(readme).toContain(`\`${ext}\``);
+    }
+  });
+
   it('has only working relative links in the markdown docs', async () => {
     for (const doc of [
       'README.md',

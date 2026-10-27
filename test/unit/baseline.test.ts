@@ -60,7 +60,7 @@ describe('loadBaseline', () => {
     await expect(loadBaseline(path.join(dir, 'other.json'))).rejects.toThrow(
       /is not a ng-health JSON report/,
     );
-    expect((await loadBaseline(path.join(dir, 'ok.json'))).project.name).toBe('acme-shop');
+    expect((await loadBaseline(path.join(dir, 'ok.json'))).project.name).toBe('example-shop');
   });
 
   it('adds a trend to the audit report, and fails fast (exit 2) on a bad baseline', async () => {

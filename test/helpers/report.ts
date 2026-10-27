@@ -112,7 +112,7 @@ export function sampleReport(): AuditReport {
   const report = buildReport({
     project: {
       ...fakeProject('/secret/home/user/project'),
-      name: 'acme-shop',
+      name: 'example-shop',
       angular: { declared: '^19.2.0', installed: '19.2.4', major: 19 },
     },
     results,

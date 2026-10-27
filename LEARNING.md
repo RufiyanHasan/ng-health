@@ -98,6 +98,17 @@ interface. That's what makes the tool extensible.
 | 18  | **TypeScript judged against Angular's range**                          | Advising "upgrade TS to 7" on Angular 21 is wrong; Angular pins supported TS versions.                                                | Compare with latest (the bug we found on a real project).                    |
 | 19  | **Signal handling (SIGINT/SIGTERM)**                                   | A cancelled CI job must not leave headless Chrome running.                                                                            | Rely on chrome-launcher (only handles SIGINT; we saw orphans).               |
 
+### Packaging as a CLI + library (ng-health)
+
+| #   | Decision                                                                                | Why                                                                                                                                 | Alternatives considered                                                    |
+| --- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 20  | **Pure library core, thin CLI** (`core/audit.ts` `runAudit` vs `cli/commands/audit.ts`) | Library users embed it in their own tools. A library that prints, writes files or calls `process.exit` would hijack their process.  | One function that does everything (unusable as a library)                  |
+| 21  | **Typed errors with `code`** (`ConfigError`, `CheckError`, `ProjectError`)              | Callers branch with `instanceof` or `err.code`; the CLI maps them all to exit 2.                                                    | Exit codes inside the library (kills the host process)                     |
+| 22  | **`AbortSignal` for cancellation**                                                      | The standard web/Node API. The CLI turns SIGINT/SIGTERM into an abort; library users get cancellation for free. No global state.    | A process-wide shutdown registry (global state inside a library)           |
+| 23  | **jiti for `.ts` configs and plugins**                                                  | Users write `ng-health.config.ts` and TS checks without a build step; it resolves `.js` import specifiers to `.ts`.                 | Requiring users to compile first; `tsx` loader hooks (global side effects) |
+| 24  | **Changesets for releases**                                                             | Each PR declares its own semver bump and changelog line; a bot PR batches them and publishing is automatic, with provenance.        | semantic-release (infers versions from commit messages; harder to review)  |
+| 25  | **`npm run smoke` on the packed tarball**                                               | Unit tests use the source; only installing the real tarball catches missing files, wrong `exports`, a lost shebang or broken types. | Trusting `npm pack --dry-run` alone                                        |
+
 ---
 
 ## 4. Interview Q&A

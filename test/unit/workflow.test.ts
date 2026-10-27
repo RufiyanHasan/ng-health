@@ -48,7 +48,7 @@ async function runCommentScript(
     },
   };
   const context = {
-    repo: { owner: 'acme', repo: 'shop' },
+    repo: { owner: 'example-org', repo: 'shop' },
     issue: { number: 42 },
     serverUrl: 'https://github.com',
     runId: 7,
@@ -109,9 +109,11 @@ describe('example GitHub Actions workflow', () => {
     expect(first.calls).toHaveLength(1);
     expect(first.calls[0]).toMatchObject({
       method: 'create',
-      args: { owner: 'acme', repo: 'shop', issue_number: 42 },
+      args: { owner: 'example-org', repo: 'shop', issue_number: 42 },
     });
-    expect(first.calls[0]!.args['body']).toContain('https://github.com/acme/shop/actions/runs/7');
+    expect(first.calls[0]!.args['body']).toContain(
+      'https://github.com/example-org/shop/actions/runs/7',
+    );
 
     const second = await runCommentScript(dir, [
       { id: 99, body: `${MARKDOWN_MARKER} old`, user: { type: 'Bot' } },

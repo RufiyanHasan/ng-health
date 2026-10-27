@@ -51,7 +51,7 @@ describe('markdown', () => {
 describe('console', () => {
   it('renders scores, findings, top fixes, incomplete checks and thresholds', () => {
     const out = stripAnsi(renderConsole(withTrend()));
-    expect(out).toContain('acme-shop · Angular 19.2.4 · npm · single app');
+    expect(out).toContain('example-shop · Angular 19.2.4 · npm · single app');
     expect(out).toMatch(/Overall score \d+ \([A-F]\) {2}\+\d+ vs baseline/);
     expect(out).toMatch(/│ Angular code\s+│\s+\d+ │\s+3 │\s+\+\d+ │/);
     expect(out).toContain('Findings: 1 critical · 0 high · 2 medium · 1 low (1 new, 1 resolved)');
@@ -83,7 +83,7 @@ describe('html', () => {
 
   it('contains every report section', () => {
     for (const text of [
-      '<title>Frontend health · acme-shop</title>',
+      '<title>Frontend health · example-shop</title>',
       'Quality gate failed',
       'Scores by category',
       'Top 3 fixes',
